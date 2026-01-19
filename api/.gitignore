@@ -1,0 +1,21 @@
+# Local configuration (contains account_id)
+wrangler.toml
+.wrangler/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Logs
+*.log
+
+# OS
+.DS_Store

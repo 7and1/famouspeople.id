@@ -1,0 +1,57 @@
+export const mockSearchResults = [
+  {
+    fpid: 'FP-001',
+    slug: 'elon-musk',
+    full_name: 'Elon Musk',
+    net_worth: 250000000000,
+    height_cm: 188,
+    birth_date: '1971-06-28',
+    occupation: ['Entrepreneur', 'Engineer'],
+    country: ['US', 'ZA'],
+    zodiac: 'Cancer',
+    mbti: 'INTJ',
+    image_url: 'https://example.com/elon.jpg',
+    relevance_score: 0.95,
+  },
+  {
+    fpid: 'FP-002',
+    slug: 'jeff-bezos',
+    full_name: 'Jeff Bezos',
+    net_worth: 150000000000,
+    height_cm: 171,
+    birth_date: '1964-01-12',
+    occupation: ['Entrepreneur'],
+    country: ['US'],
+    zodiac: 'Capricorn',
+    mbti: 'ISTJ',
+    image_url: 'https://example.com/jeff.jpg',
+    relevance_score: 0.85,
+  },
+  {
+    fpid: 'FP-003',
+    slug: 'albert-einstein',
+    full_name: 'Albert Einstein',
+    net_worth: null,
+    height_cm: 175,
+    birth_date: '1879-03-14',
+    occupation: ['Physicist'],
+    country: ['DE'],
+    zodiac: 'Pisces',
+    mbti: 'INTP',
+    image_url: 'https://example.com/einstein.jpg',
+    relevance_score: 0.75,
+  },
+];
+
+export const mockSearchFacets = {
+  country: [
+    { value: 'US', count: 150 },
+    { value: 'GB', count: 45 },
+    { value: 'DE', count: 30 },
+  ],
+  zodiac: [
+    { value: 'Leo', count: 25 },
+    { value: 'Scorpio', count: 22 },
+    { value: 'Aries', count: 20 },
+  ],
+};

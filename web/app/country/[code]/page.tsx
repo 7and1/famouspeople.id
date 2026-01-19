@@ -1,0 +1,44 @@
+import { ListingLayout } from '../../../components/templates';
+import { PersonCard, CategoryPagination } from '../../../components/organisms';
+import { ItemListSchema } from '../../../components/seo/ItemListSchema';
+import { getCategoryPeople } from '../../../lib/api/categories';
+import { buildCategoryMetadata } from '../../../lib/seo/metadata';
+
+export async function generateMetadata({ params, searchParams }: { params: { code: string }; searchParams: Record<string, string | string[] | undefined> }) {
+  const countryName = params.code.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  const metadata = buildCategoryMetadata(`Famous People from ${countryName}`, `Explore celebrities from ${countryName}.`);
+  const page = Number(searchParams?.page || 1);
+  if (page > 50) {
+    return { ...metadata, robots: 'noindex, nofollow' };
+  }
+  return metadata;
+}
+
+export default async function CountryPage({ params, searchParams }: { params: { code: string }; searchParams: Record<string, string | string[] | undefined> }) {
+  const countryName = params.code.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  const page = Number(searchParams.page || 1);
+  const limit = 20;
+  const offset = (page - 1) * limit;
+
+  const result = await getCategoryPeople('country', countryName, limit, offset, 'net_worth:desc').catch(() => ({ data: [], meta: { total: 0, page: 1, per_page: limit, has_next: false } }));
+
+  const totalPages = Math.ceil(result.meta.total / limit) || 1;
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://famouspeople.id';
+
+  return (
+    <ListingLayout>
+      <header className="rounded-2xl border border-surface-border bg-white p-6 shadow-card">
+        <h1 className="text-2xl font-semibold text-text-primary">Famous People from {countryName}</h1>
+        <p className="mt-2 text-sm text-text-secondary">Browse celebrities associated with {countryName}.</p>
+      </header>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {result.data.map((person) => (
+          <PersonCard key={person.fpid} {...person} showQuickFacts />
+        ))}
+      </div>
+      <CategoryPagination currentPage={page} totalPages={totalPages} />
+      <ItemListSchema items={result.data} offset={offset} siteUrl={siteUrl} />
+    </ListingLayout>
+  );
+}

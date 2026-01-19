@@ -1,0 +1,24 @@
+version: "3.8"
+
+services:
+  api:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./api:/app
+    env_file:
+      - ./api/.env
+    ports:
+      - "8006:8006"
+    command: sh -c "npm install && npm run dev"
+
+  web:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./web:/app
+    env_file:
+      - ./web/.env
+    ports:
+      - "3000:3000"
+    command: sh -c "npm install && npm run dev"

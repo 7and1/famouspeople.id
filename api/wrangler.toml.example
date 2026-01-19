@@ -1,0 +1,71 @@
+# Cloudflare Workers Configuration
+# Copy this file to wrangler.toml and fill in your values
+# DO NOT commit wrangler.toml - it contains sensitive account_id
+
+# Account ID (required)
+# Get it from: https://dash.cloudflare.com -> Workers & Pages -> Overview
+# Or use environment variable: CLOUDFLARE_ACCOUNT_ID
+# account_id = "your-account-id-here"
+
+# Worker name (will be the subdomain: https://famouspeople-api.your-subdomain.workers.dev)
+name = "famouspeople-api"
+main = "src/worker.ts"
+compatibility_date = "2024-01-01"
+
+# Node.js compatibility (for better compatibility with Node.js APIs)
+compatibility_flags = ["nodejs_compat"]
+
+# Environment variables (set in Cloudflare dashboard or via wrangler secret)
+# These are placeholders for documentation - actual values should be secrets
+#
+# Required secrets (use: wrangler secret put <NAME>):
+# - SUPABASE_URL
+# - SUPABASE_ANON_KEY
+#
+# Optional secrets:
+# - SUPABASE_SERVICE_ROLE_KEY
+# - SUPABASE_JWT_SECRET
+# - DATABASE_URL
+# - ALLOWED_ORIGINS
+# - OPENAI_API_KEY
+# - UPSTASH_REDIS_URL
+# - UPSTASH_REDIS_TOKEN
+
+# KV Namespaces (optional, for caching)
+# Create with: wrangler kv:namespace create "KV_CACHE"
+# [[kv_namespaces]]
+# binding = "KV_CACHE"
+# id = "your-kv-namespace-id"
+
+# Routes (for custom domain)
+# routes = [
+#   { pattern = "api.famouspeople.id/*", zone_name = "famouspeople.id" }
+# ]
+
+# Build configuration
+[build]
+# No build command needed - TypeScript is handled by wrangler
+
+# Rules for including files
+[rules]
+[[rules]]
+type = "ESModule"
+globs = ["**/*.ts", "**/*.tsx"]
+
+# Staging environment
+# [env.staging]
+# name = "famouspeople-api-staging"
+# routes = [
+#   { pattern = "api-staging.famouspeople.id/*", zone_name = "famouspeople.id" }
+# ]
+
+# Production environment
+[env.production]
+name = "famouspeople-api"
+# routes = [
+#   { pattern = "api.famouspeople.id/*", zone_name = "famouspeople.id" }
+# ]
+
+# Limits and quotas
+[limits]
+cpu_ms = 50

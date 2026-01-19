@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --color-brand: 14 165 233;
+  --color-surface: 255 255 255;
+  --color-surface-muted: 248 250 252;
+  --color-text: 15 23 42;
+}
+
+body {
+  @apply bg-surface text-text-primary antialiased;
+  background-image: radial-gradient(circle at 10% 10%, rgba(14, 165, 233, 0.08), transparent 45%),
+    radial-gradient(circle at 90% 20%, rgba(14, 165, 233, 0.05), transparent 40%),
+    linear-gradient(180deg, rgba(248, 250, 252, 0.9), rgba(255, 255, 255, 1));
+}
+
+main {
+  min-height: 70vh;
+}
+
+.prose :where(a) {
+  @apply text-brand-600 underline underline-offset-4;
+}
+
+.prose :where(h2, h3, h4) {
+  @apply text-text-primary;
+}

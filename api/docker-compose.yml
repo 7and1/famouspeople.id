@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  famouspeople-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: famouspeople-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=8006
+    ports:
+      - "8006:8006"
+    networks:
+      - supabase-tier
+
+networks:
+  supabase-tier:
+    external: true
+    name: supabase_default

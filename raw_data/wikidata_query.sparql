@@ -1,0 +1,27 @@
+# Top 10,000 Famous People - Wikidata SPARQL Query
+# Run at: https://query.wikidata.org/
+
+SELECT ?id ?name ?birth_year ?birth_date ?imdb_id ?wikidata_id ?gender ?country ?occupation ?sitelinks
+WHERE {
+  ?wikidata_id wdt:P31 wd:Q5 ;
+              rdfs:label ?name ;
+              wikibase:sitelinks ?sitelinks .
+  FILTER (LANG (?name) = "en")
+  FILTER (?sitelinks > 5)
+
+  OPTIONAL { ?wikidata_id wdt:P569 ?birth_date . }
+  OPTIONAL { ?wikidata_id wdt:P569 ?bd . BIND (YEAR(?bd) AS ?birth_year) }
+  OPTIONAL { ?wikidata_id wdt:P345 ?imdb_id . }
+  OPTIONAL { ?wikidata_id wdt:P21/rdfs:label ?gender . FILTER (LANG (?gender) = "en") }
+  OPTIONAL { ?wikidata_id wdt:P27/rdfs:label ?country . FILTER (LANG (?country) = "en") }
+  OPTIONAL { ?wikidata_id wdt:P106/rdfs:label ?occupation . FILTER (LANG (?occupation) = "en") }
+
+  BIND (SUBSTR(STR(?wikidata_id), 32) AS ?id)
+}
+ORDER BY DESC(?sitelinks)
+LIMIT 10000
+
+# NOTES:
+# - Export as CSV, save as raw_data/wikidata_export.csv
+# - Query may timeout - reduce LIMIT or add occupation filter if needed
+# - wikibase:sitelinks = Wikipedia article count (popularity proxy)
