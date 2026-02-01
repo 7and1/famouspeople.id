@@ -43,9 +43,9 @@
 # Dashboard: Pages > Create project > Connect to Git
 
 # Build settings:
-Build command: pnpm build
+Build command: npm run build
 Build output directory: .next
-Root directory: /
+Root directory: web
 Node.js version: 20
 ```
 
@@ -67,7 +67,7 @@ preview_id = "yyyyyyyyyyyyyyyyyyyyyyyyyyyy"
 
 # Environment variables (non-secret)
 [vars]
-NEXT_PUBLIC_API_URL = "https://api.famouspeople.id"
+NEXT_PUBLIC_API_URL = "https://api.famouspeople.id/api/v1"
 NEXT_PUBLIC_SITE_URL = "https://famouspeople.id"
 
 # Production environment
@@ -115,7 +115,8 @@ version: "3.8"
 
 services:
   cloudflared:
-    image: cloudflare/cloudflared:latest
+    # Avoid :latest in production; pin a known-good version.
+    image: cloudflare/cloudflared:<PINNED_VERSION>
     container_name: famouspeople-tunnel
     restart: unless-stopped
     command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
@@ -186,6 +187,22 @@ export async function getCachedIdentity(slug: string, env: Env) {
 ```
 
 ## 3. VPS Docker Setup
+
+### 3.0 One-command Deploy (Recommended)
+
+From your local machine (with SSH access to the VPS):
+
+```bash
+./deploy.sh
+```
+
+Optional flags:
+
+```bash
+./deploy.sh --no-cache
+./deploy.sh --skip-pull
+./deploy.sh --skip-public-check
+```
 
 ### 3.1 Dockerfile for API
 
@@ -842,6 +859,41 @@ dig api.famouspeople.id +short
 
 # Check propagation worldwide
 # https://www.whatsmydns.net/#A/famouspeople.id
+```
+
+### 8.3 Troubleshooting: Parking Page / HTTP 525
+
+#### Symptom: `famouspeople.id` shows a parked/placeholder page
+
+If `curl -fsSL https://famouspeople.id/ | head` contains `window.park` (or similar), the apex domain is not pointing to Cloudflare Pages.
+
+Fix checklist:
+- Cloudflare Pages → Project → **Custom domains**:
+  - Add `famouspeople.id`
+  - Add `www.famouspeople.id`
+- Cloudflare DNS:
+  - Ensure the apex `@` record is the Pages-provided record (Cloudflare may suggest it automatically)
+  - Ensure `www` CNAME points to the Pages hostname (or proxied to apex per Pages instructions)
+- Remove/disable any third-party “domain parking” service that currently owns the apex.
+
+#### Symptom: `api.famouspeople.id` returns `HTTP 525`
+
+`525` means Cloudflare could not complete a TLS handshake to the origin.
+
+Fix checklist:
+- Cloudflare SSL/TLS mode: **Full (strict)** (and ensure the origin presents a valid cert)
+- Cloudflare Tunnel hostname:
+  - Hostname: `api.famouspeople.id`
+  - Service: `http://famouspeople-api:8006`
+- VPS:
+  - Confirm the API container is healthy and listening on `8006`
+  - Confirm `cloudflared` tunnel container is running and authenticated
+
+#### Quick end-to-end validation
+
+```bash
+node scripts/seo/validate.mjs --base-url https://famouspeople.id
+curl -fsSIL https://api.famouspeople.id/health | sed -n '1,12p'
 ```
 
 ## 9. Security Checklist

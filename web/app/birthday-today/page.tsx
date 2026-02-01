@@ -1,6 +1,17 @@
+import { Metadata } from 'next';
 import { ListingLayout } from '../../components/templates';
-import { PersonCard } from '../../components/organisms';
+import { PersonCard } from '../../components/organisms/PersonCard';
 import { getBirthdaysToday } from '../../lib/api/birthdays';
+
+export const metadata: Metadata = {
+  title: 'Famous Birthdays Today | Celebrity Birthdays | FamousPeople.id',
+  description: 'Discover celebrities born today. Find famous actors, musicians, athletes, and influencers celebrating their birthday today on FamousPeople.id.',
+  alternates: { canonical: '/birthday-today' },
+  openGraph: {
+    title: 'Famous Birthdays Today | Celebrity Birthdays | FamousPeople.id',
+    description: 'Discover celebrities born today. Find famous actors, musicians, athletes, and influencers celebrating their birthday today.',
+  },
+};
 
 export default async function BirthdayTodayPage() {
   const today = new Date();

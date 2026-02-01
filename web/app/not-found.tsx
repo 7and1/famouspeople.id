@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { SearchBox } from '../components/molecules/SearchBox';
+import { SearchHero } from '../components/organisms/SearchHero';
 
 export const metadata: Metadata = {
   title: 'Page Not Found | FamousPeople.id',
@@ -16,7 +16,7 @@ const quickLinks = [
   { href: '/richest', label: 'Richest Celebrities', description: 'Top net worth rankings' },
   { href: '/tallest', label: 'Tallest Celebrities', description: 'Height rankings' },
   { href: '/zodiac/aries', label: 'Zodiac Signs', description: 'Explore by star sign' },
-  { href: '/mbti/intj', label: 'MBTI Types', description: 'Personity type rankings' },
+  { href: '/mbti/intj', label: 'MBTI Types', description: 'Personality type rankings' },
   { href: '/birthday-today', label: 'Birthdays', description: 'Born today' },
 ];
 
@@ -32,18 +32,12 @@ export default function NotFound() {
         {/* Main Message */}
         <h1 className="text-3xl font-semibold text-text-primary">Page not found</h1>
         <p className="mt-3 text-base text-text-secondary">
-          The page you are looking for doesn't exist or has been moved.
+          The page you are looking for doesn&apos;t exist or has been moved.
         </p>
 
         {/* Search Box */}
         <div className="mx-auto mt-8 max-w-xl">
-          <SearchBox
-            variant="hero"
-            placeholder="Search for a celebrity..."
-            onSubmit={(value) => {
-              if (value) window.location.href = `/search?q=${encodeURIComponent(value)}`;
-            }}
-          />
+          <SearchHero query="" />
         </div>
 
         {/* Quick Links */}

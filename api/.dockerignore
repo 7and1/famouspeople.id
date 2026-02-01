@@ -9,5 +9,4 @@ tests
 coverage
 .wrangler
 wrangler.toml
-src/worker.ts
 

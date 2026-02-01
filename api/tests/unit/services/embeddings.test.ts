@@ -304,10 +304,12 @@ describe('embeddings service', () => {
         },
       });
 
-      await expect(getSimilarPeople(supabase, 'FP-001')).rejects.toThrow();
+      // After removing dangerous fallback, RPC failure returns empty array
+      const result = await getSimilarPeople(supabase, 'FP-001');
+      expect(result).toEqual([]);
     });
 
-    it('calculates cosine similarity correctly', async () => {
+    it('returns empty array when RPC not available (fallback removed)', async () => {
       const supabase = createMockSupabaseClientWithTables({
         identities: {
           data: mockIdentityRowsWithEmbeddings,
@@ -315,16 +317,12 @@ describe('embeddings service', () => {
         },
       });
 
+      // Dangerous fallback removed - now returns empty array when RPC fails
       const result = await getSimilarPeople(supabase, 'FP-001');
-
-      expect(result).toHaveLength(2);
-      expect(result[0].similarity_score).toBeGreaterThanOrEqual(-1);
-      expect(result[0].similarity_score).toBeLessThanOrEqual(1);
-      expect(result[1].similarity_score).toBeGreaterThanOrEqual(-1);
-      expect(result[1].similarity_score).toBeLessThanOrEqual(1);
+      expect(result).toEqual([]);
     });
 
-    it('sorts results by similarity score descending', async () => {
+    it('returns empty array without RPC (no JS fallback)', async () => {
       const supabase = createMockSupabaseClientWithTables({
         identities: {
           data: mockIdentityRowsWithEmbeddings,
@@ -332,9 +330,9 @@ describe('embeddings service', () => {
         },
       });
 
+      // JS fallback removed for safety - returns empty when RPC unavailable
       const result = await getSimilarPeople(supabase, 'FP-001');
-
-      expect(result[0].similarity_score).toBeGreaterThanOrEqual(result[1].similarity_score);
+      expect(result).toEqual([]);
     });
 
     it('excludes source person from results', async () => {
@@ -406,9 +404,9 @@ describe('embeddings service', () => {
         },
       });
 
+      // Returns empty array when RPC fails (no fallback)
       const result = await getSimilarPeople(supabase, 'FP-001', 0);
-
-      expect(result.length).toBe(1);
+      expect(result).toEqual([]);
     });
 
     it('filters out people with null embeddings', async () => {
@@ -436,7 +434,7 @@ describe('embeddings service', () => {
       expect(result.every(r => r.similarity_score !== null)).toBe(true);
     });
 
-    it('only considers published people', async () => {
+    it('uses RPC instead of table query (no fallback)', async () => {
       const supabase = createMockSupabaseClientWithTables({
         identities: {
           data: mockIdentityRowsWithEmbeddings,
@@ -446,8 +444,8 @@ describe('embeddings service', () => {
 
       await getSimilarPeople(supabase, 'FP-001');
 
-      const fromCalls = (supabase as any).from;
-      expect(fromCalls).toHaveBeenCalledWith('identities');
+      // Should call RPC, not direct table query (fallback removed)
+      expect(supabase.rpc).toHaveBeenCalledWith('get_similar_people', expect.any(Object));
     });
 
     it('filters to only published records', async () => {
@@ -465,7 +463,7 @@ describe('embeddings service', () => {
   });
 
   describe('cosine similarity edge cases', () => {
-    it('handles zero vectors gracefully', async () => {
+    it('returns empty array when RPC unavailable (no fallback)', async () => {
       const rowsWithZero = [
         {
           fpid: 'FP-001',
@@ -492,9 +490,9 @@ describe('embeddings service', () => {
         },
       });
 
+      // Dangerous JS fallback removed - returns empty when RPC fails
       const result = await getSimilarPeople(supabase, 'FP-001');
-
-      expect(result).toHaveLength(1);
+      expect(result).toEqual([]);
     });
 
     it('returns similarity score between -1 and 1', async () => {

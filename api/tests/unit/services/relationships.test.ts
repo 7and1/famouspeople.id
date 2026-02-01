@@ -139,6 +139,9 @@ describe('relationships service', () => {
           relation_type: 'colleague',
           start_date: '2020-01-01',
           end_date: null,
+          relation_types: { code: 'colleague', label: 'Colleague', reverse_label: 'Colleague of' },
+          source: { fpid: 'FP-001', slug: 'elon-musk', full_name: 'Elon Musk', image_url: 'https://example.com/elon.jpg', is_published: true },
+          target: { fpid: 'FP-002', slug: 'jeff-bezos', full_name: 'Jeff Bezos', image_url: 'https://example.com/jeff.jpg', is_published: true },
         },
         {
           source_fpid: 'FP-002',
@@ -146,6 +149,9 @@ describe('relationships service', () => {
           relation_type: 'competitor',
           start_date: '2015-01-01',
           end_date: null,
+          relation_types: { code: 'competitor', label: 'Competitor', reverse_label: 'Competed with' },
+          source: { fpid: 'FP-002', slug: 'jeff-bezos', full_name: 'Jeff Bezos', image_url: 'https://example.com/jeff.jpg', is_published: true },
+          target: { fpid: 'FP-001', slug: 'elon-musk', full_name: 'Elon Musk', image_url: 'https://example.com/elon.jpg', is_published: true },
         },
       ];
 
@@ -473,6 +479,9 @@ describe('relationships service', () => {
           relation_type: 'friend',
           start_date: null,
           end_date: null,
+          relation_types: { code: 'friend', label: 'Friend', reverse_label: 'Friend of' },
+          source: { fpid: 'FP-001', slug: 'elon-musk', full_name: 'Elon Musk', image_url: 'https://example.com/elon.jpg', is_published: true },
+          target: { fpid: 'FP-002', slug: 'jeff-bezos', full_name: 'Jeff Bezos', image_url: 'https://example.com/jeff.jpg', is_published: true },
         },
       ];
 
@@ -574,6 +583,9 @@ describe('relationships service', () => {
           relation_type: 'unknown_type',
           start_date: null,
           end_date: null,
+          relation_types: null,
+          source: { fpid: 'FP-001', slug: 'elon-musk', full_name: 'Elon Musk', image_url: 'https://example.com/elon.jpg', is_published: true },
+          target: { fpid: 'FP-002', slug: 'jeff-bezos', full_name: 'Jeff Bezos', image_url: 'https://example.com/jeff.jpg', is_published: true },
         },
       ];
 
@@ -599,11 +611,41 @@ describe('relationships service', () => {
     });
 
     it('returns empty nodes array when no nodes found', async () => {
-      const supabase = createMockSupabase({ nodes: [] });
+      // Create relationships where target is not published (is_published: false)
+      // This will cause the relationship to be skipped, resulting in no nodes
+      const relsWithUnpublished = [
+        {
+          source_fpid: 'FP-001',
+          target_fpid: 'FP-002',
+          relation_type: 'colleague',
+          start_date: '2020-01-01',
+          end_date: null,
+          relation_types: { code: 'colleague', label: 'Colleague', reverse_label: 'Colleague of' },
+          source: { fpid: 'FP-001', slug: 'elon-musk', full_name: 'Elon Musk', image_url: 'https://example.com/elon.jpg', is_published: true },
+          target: { fpid: 'FP-002', slug: 'jeff-bezos', full_name: 'Jeff Bezos', image_url: 'https://example.com/jeff.jpg', is_published: false },
+        },
+      ];
+
+      const mockPerson = {
+        fpid: 'FP-001',
+        ...mockIdentityRows[0],
+        age: 53,
+        country: ['US'],
+        occupation: [],
+        social_links: {},
+      };
+
+      const supabase = createMockSupabase({
+        person: mockPerson,
+        relationships: relsWithUnpublished,
+        nodes: [],
+      });
       const result = await getRelationshipsBySlug(supabase, 'elon-musk', {});
 
       expect(result).not.toBeNull();
-      expect(result?.nodes).toEqual([]);
+      // When related person is not published, relationship is skipped so no nodes/edges
+      expect(result?.nodes).toHaveLength(0);
+      expect(result?.edges).toHaveLength(0);
     });
   });
 });

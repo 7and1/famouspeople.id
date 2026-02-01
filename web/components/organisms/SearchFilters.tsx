@@ -2,8 +2,9 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FilterBar } from './FilterBar';
+import type { SearchFacets } from '../../lib/api/types';
 
-export function SearchFilters({ facets, totalResults }: { facets: any; totalResults: number }) {
+export function SearchFilters({ facets, totalResults }: { facets?: SearchFacets; totalResults: number }) {
   const router = useRouter();
   const params = useSearchParams();
 
@@ -15,11 +16,11 @@ export function SearchFilters({ facets, totalResults }: { facets: any; totalResu
   const groups = [
     {
       label: 'Country',
-      options: (facets?.country || []).map((item: any) => item.value),
+      options: (facets?.country || []).map((item) => item.value),
     },
     {
       label: 'Zodiac',
-      options: (facets?.zodiac || []).map((item: any) => item.value),
+      options: (facets?.zodiac || []).map((item) => item.value),
     },
   ].filter((group) => group.options.length > 0);
 

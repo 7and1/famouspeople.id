@@ -10,7 +10,7 @@
 # Worker name (will be the subdomain: https://famouspeople-api.your-subdomain.workers.dev)
 name = "famouspeople-api"
 main = "src/worker.ts"
-compatibility_date = "2024-01-01"
+compatibility_date = "2024-09-23"
 
 # Node.js compatibility (for better compatibility with Node.js APIs)
 compatibility_flags = ["nodejs_compat"]

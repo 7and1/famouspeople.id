@@ -1,17 +1,32 @@
 import { ListingLayout } from '../../../components/templates';
-import { PersonCard, CategoryPagination } from '../../../components/organisms';
+import { PersonCard } from '../../../components/organisms/PersonCard';
+import { CategoryPagination } from '../../../components/organisms/CategoryPagination';
 import { ItemListSchema } from '../../../components/seo/ItemListSchema';
 import { getCategoryPeople } from '../../../lib/api/categories';
 import { buildCategoryMetadata } from '../../../lib/seo/metadata';
+import { buildPaginatedMetadata } from '../../../lib/seo/canonical';
+import { buildBreadcrumbSchema } from '../../../lib/seo/schema';
 
 export async function generateMetadata({ params, searchParams }: { params: { code: string }; searchParams: Record<string, string | string[] | undefined> }) {
   const countryName = params.code.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-  const metadata = buildCategoryMetadata(`Famous People from ${countryName}`, `Explore celebrities from ${countryName}.`);
   const page = Number(searchParams?.page || 1);
+
+  const result = await getCategoryPeople('country', countryName, 1, 0, 'net_worth:desc').catch(() => ({ data: [], meta: { total: 0 } }));
+  const totalPages = Math.ceil(result.meta.total / 20) || 1;
+
+  const baseMetadata = buildCategoryMetadata(`Famous People from ${countryName}`, `Explore celebrities from ${countryName}.`);
+  const paginationMetadata = buildPaginatedMetadata({
+    path: `/country/${params.code}`,
+    searchParams,
+    currentPage: page,
+    totalPages,
+  });
+
   if (page > 50) {
-    return { ...metadata, robots: 'noindex, nofollow' };
+    return { ...baseMetadata, ...paginationMetadata, robots: 'noindex, nofollow' };
   }
-  return metadata;
+
+  return { ...baseMetadata, ...paginationMetadata };
 }
 
 export default async function CountryPage({ params, searchParams }: { params: { code: string }; searchParams: Record<string, string | string[] | undefined> }) {
@@ -26,8 +41,18 @@ export default async function CountryPage({ params, searchParams }: { params: { 
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://famouspeople.id';
 
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { label: 'Home', href: '/' },
+    { label: 'Countries', href: '/country' },
+    { label: `Famous People from ${countryName}`, href: `/country/${params.code}` },
+  ], siteUrl);
+
   return (
     <ListingLayout>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       <header className="rounded-2xl border border-surface-border bg-white p-6 shadow-card">
         <h1 className="text-2xl font-semibold text-text-primary">Famous People from {countryName}</h1>
         <p className="mt-2 text-sm text-text-secondary">Browse celebrities associated with {countryName}.</p>

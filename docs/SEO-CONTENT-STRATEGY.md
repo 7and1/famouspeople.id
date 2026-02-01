@@ -658,40 +658,19 @@ fonts: 20KB
 <?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
-    <loc>https://famouspeople.id/sitemaps/people-a.xml</loc>
-    <lastmod>2024-01-15</lastmod>
+    <loc>https://famouspeople.id/sitemaps/static.xml</loc>
+    <lastmod>2026-01-31</lastmod>
   </sitemap>
   <sitemap>
-    <loc>https://famouspeople.id/sitemaps/people-b.xml</loc>
-    <lastmod>2024-01-15</lastmod>
+    <loc>https://famouspeople.id/sitemaps/people/1</loc>
+    <lastmod>2026-01-31</lastmod>
   </sitemap>
-  <!-- ... alphabetical splits -->
-  <sitemap>
-    <loc>https://famouspeople.id/sitemaps/zodiac.xml</loc>
-    <lastmod>2024-01-15</lastmod>
-  </sitemap>
-  <sitemap>
-    <loc>https://famouspeople.id/sitemaps/mbti.xml</loc>
-    <lastmod>2024-01-15</lastmod>
-  </sitemap>
-  <sitemap>
-    <loc>https://famouspeople.id/sitemaps/countries.xml</loc>
-    <lastmod>2024-01-15</lastmod>
-  </sitemap>
-  <sitemap>
-    <loc>https://famouspeople.id/sitemaps/occupations.xml</loc>
-    <lastmod>2024-01-15</lastmod>
-  </sitemap>
-  <sitemap>
-    <loc>https://famouspeople.id/sitemaps/comparisons.xml</loc>
-    <lastmod>2024-01-15</lastmod>
-  </sitemap>
-  <sitemap>
-    <loc>https://famouspeople.id/sitemaps/rankings.xml</loc>
-    <lastmod>2024-01-15</lastmod>
-  </sitemap>
-</sitemaps>
+</sitemapindex>
 ```
+
+**Implementation notes**
+- The sitemap index is served at `https://famouspeople.id/sitemap.xml`.
+- People sitemaps are paged via `/sitemaps/people/{page}` and powered by the API JSON endpoint `/api/v1/sitemap-data/{page}`.
 
 ### Update Frequency
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { Input } from '../atoms/Input';
 import { Button } from '../atoms/Button';
 import clsx from 'clsx';
@@ -14,6 +14,7 @@ interface SearchBoxProps {
 
 export function SearchBox({ value = '', placeholder = 'Search for a celebrity...', variant = 'default', onSubmit }: SearchBoxProps) {
   const [query, setQuery] = useState(value);
+  const inputId = useId();
 
   useEffect(() => {
     setQuery(value);
@@ -30,7 +31,11 @@ export function SearchBox({ value = '', placeholder = 'Search for a celebrity...
         onSubmit?.(query.trim());
       }}
     >
+      <label htmlFor={inputId} className="sr-only">
+        Search
+      </label>
       <Input
+        id={inputId}
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         placeholder={placeholder}

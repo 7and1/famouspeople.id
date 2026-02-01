@@ -1,6 +1,27 @@
+import { Metadata } from 'next';
 import { ListingLayout } from '../../../components/templates';
-import { PersonCard } from '../../../components/organisms';
+import { PersonCard } from '../../../components/organisms/PersonCard';
 import { getBirthdaysMonth } from '../../../lib/api/birthdays';
+import { buildCanonicalUrl } from '../../../lib/seo/canonical';
+
+export async function generateMetadata({ params }: { params: { month: string } }): Promise<Metadata> {
+  const month = params.month.toLowerCase();
+  const monthCapitalized = month.charAt(0).toUpperCase() + month.slice(1);
+  const canonical = buildCanonicalUrl({ path: `/birthday/${month}` });
+
+  return {
+    title: `Famous Birthdays in ${monthCapitalized} | Celebrity Birthdays | FamousPeople.id`,
+    description: `Discover celebrities born in ${monthCapitalized}. Find famous actors, musicians, athletes, and influencers with ${monthCapitalized} birthdays on FamousPeople.id.`,
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      title: `Famous Birthdays in ${monthCapitalized} | Celebrity Birthdays | FamousPeople.id`,
+      description: `Discover celebrities born in ${monthCapitalized}. Find famous actors, musicians, athletes, and influencers with ${monthCapitalized} birthdays.`,
+      url: canonical,
+    },
+  };
+}
 
 const monthNames = [
   'january', 'february', 'march', 'april', 'may', 'june',

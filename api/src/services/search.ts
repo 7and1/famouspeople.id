@@ -17,14 +17,26 @@ export interface SearchParams {
   offset?: number;
 }
 
-export const normalizeSearchParams = (params: SearchParams) => ({
-  ...params,
-  q: params.q.trim(),
-  type: params.type || 'Person',
-  sort: params.sort || 'relevance',
-  limit: params.limit ?? 20,
-  offset: params.offset ?? 0,
-});
+const MAX_QUERY_LENGTH = 100;
+const ALLOWED_QUERY_PATTERN = /^[\p{L}\p{N}\s\-'.]+$/u;
+
+export const normalizeSearchParams = (params: SearchParams) => {
+  const trimmed = params.q.trim();
+  if (trimmed.length > MAX_QUERY_LENGTH) {
+    throw new Error('Query too long');
+  }
+  if (!ALLOWED_QUERY_PATTERN.test(trimmed)) {
+    throw new Error('Invalid characters in query');
+  }
+  return {
+    ...params,
+    q: trimmed,
+    type: params.type || 'Person',
+    sort: params.sort || 'relevance',
+    limit: params.limit ?? 20,
+    offset: params.offset ?? 0,
+  };
+};
 
 const applyFilters = (query: any, params: SearchParams) => {
   if (params.type) query.eq('type', params.type);
@@ -45,65 +57,64 @@ export const searchPeople = async (supabase: SupabaseClient, rawParams: SearchPa
   const params = normalizeSearchParams(rawParams);
 
   // Try RPC-based search for trigram relevance when available
-  const { data: rpcData, error: rpcError } = await supabase.rpc('search_people', {
-    q: params.q,
-    type_filter: params.type,
-    country_filter: params.country,
-    occupation_filter: params.occupation,
-    zodiac_filter: params.zodiac,
-    mbti_filter: params.mbti,
-    gender_filter: params.gender,
-    birth_year_min: params.birth_year_min,
-    birth_year_max: params.birth_year_max,
-    net_worth_min: params.net_worth_min,
-    is_alive: params.is_alive,
-    sort: params.sort,
-    limit_count: params.limit,
-    offset_count: params.offset,
-  });
+  // Execute all three RPCs in parallel for better performance
+  const [searchResult, countResult, facetsResult] = await Promise.all([
+    supabase.rpc('search_people', {
+      q: params.q,
+      type_filter: params.type,
+      country_filter: params.country,
+      occupation_filter: params.occupation,
+      zodiac_filter: params.zodiac,
+      mbti_filter: params.mbti,
+      gender_filter: params.gender,
+      birth_year_min: params.birth_year_min,
+      birth_year_max: params.birth_year_max,
+      net_worth_min: params.net_worth_min,
+      is_alive: params.is_alive,
+      sort: params.sort,
+      limit_count: params.limit,
+      offset_count: params.offset,
+    }),
+    supabase.rpc('search_people_count', {
+      q: params.q,
+      type_filter: params.type,
+      country_filter: params.country,
+      occupation_filter: params.occupation,
+      zodiac_filter: params.zodiac,
+      mbti_filter: params.mbti,
+      gender_filter: params.gender,
+      birth_year_min: params.birth_year_min,
+      birth_year_max: params.birth_year_max,
+      net_worth_min: params.net_worth_min,
+      is_alive: params.is_alive,
+    }),
+    supabase.rpc('search_people_facets', {
+      q: params.q,
+      type_filter: params.type,
+      country_filter: params.country,
+      occupation_filter: params.occupation,
+      zodiac_filter: params.zodiac,
+      mbti_filter: params.mbti,
+      gender_filter: params.gender,
+      birth_year_min: params.birth_year_min,
+      birth_year_max: params.birth_year_max,
+      net_worth_min: params.net_worth_min,
+      is_alive: params.is_alive,
+    })
+  ]);
 
-  let data = rpcError ? null : rpcData;
-  let total = 0;
+  let data = searchResult.error ? null : searchResult.data;
+  let total = countResult.data || 0;
   let facets: { country: { value: string; count: number }[]; zodiac: { value: string; count: number }[] } = {
     country: [],
     zodiac: [],
   };
 
-  if (!rpcError) {
-    const countRes = await supabase.rpc('search_people_count', {
-      q: params.q,
-      type_filter: params.type,
-      country_filter: params.country,
-      occupation_filter: params.occupation,
-      zodiac_filter: params.zodiac,
-      mbti_filter: params.mbti,
-      gender_filter: params.gender,
-      birth_year_min: params.birth_year_min,
-      birth_year_max: params.birth_year_max,
-      net_worth_min: params.net_worth_min,
-      is_alive: params.is_alive,
-    });
-
-    total = countRes.data || 0;
-
-    const facetsRes = await supabase.rpc('search_people_facets', {
-      q: params.q,
-      type_filter: params.type,
-      country_filter: params.country,
-      occupation_filter: params.occupation,
-      zodiac_filter: params.zodiac,
-      mbti_filter: params.mbti,
-      gender_filter: params.gender,
-      birth_year_min: params.birth_year_min,
-      birth_year_max: params.birth_year_max,
-      net_worth_min: params.net_worth_min,
-      is_alive: params.is_alive,
-    });
-
-    if (facetsRes.data) {
-      facets = facetsRes.data as typeof facets;
-    }
+  if (facetsResult.data) {
+    facets = facetsResult.data as typeof facets;
   }
+
+  const rpcError = searchResult.error;
 
   if (rpcError) {
     let query = supabase

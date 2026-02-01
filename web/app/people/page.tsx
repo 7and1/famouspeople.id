@@ -1,6 +1,17 @@
+import { Metadata } from 'next';
 import { ListingLayout } from '../../components/templates';
-import { PersonCard } from '../../components/organisms';
+import { PersonCard } from '../../components/organisms/PersonCard';
 import { getRankings } from '../../lib/api/rankings';
+
+export const metadata: Metadata = {
+  title: 'Featured People | Trending Celebrities | FamousPeople.id',
+  description: 'Discover trending celebrities and featured profiles on FamousPeople.id. Explore famous actors, musicians, athletes, and influencers with net worth, height, and biographical facts.',
+  alternates: { canonical: '/people' },
+  openGraph: {
+    title: 'Featured People | Trending Celebrities | FamousPeople.id',
+    description: 'Discover trending celebrities and featured profiles. Explore famous actors, musicians, athletes, and influencers with net worth, height, and biographical facts.',
+  },
+};
 
 export default async function PeopleIndex() {
   const result = await getRankings('net-worth', undefined, 30).catch(() => ({ data: [] }));

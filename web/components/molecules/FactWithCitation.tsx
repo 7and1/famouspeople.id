@@ -16,13 +16,19 @@ export function FactWithCitation({
   sourceName,
   lastUpdated,
 }: FactWithCitationProps) {
+  const showUpdated = lastUpdated ? (
+    <span className="text-text-muted/70">
+      {' '}· Updated {lastUpdated}
+    </span>
+  ) : null;
+
   return (
     <div className="rounded-lg border border-surface-border bg-white px-4 py-3 shadow-sm">
       <Label>{label}</Label>
       <div className="mt-2 text-sm font-semibold text-text-primary">
         {value ?? '—'}
       </div>
-      {(sourceUrl || sourceName) && (
+      {sourceUrl ? (
         <a
           href={sourceUrl}
           target="_blank"
@@ -32,13 +38,14 @@ export function FactWithCitation({
         >
           <span>{sourceName || 'Source'}</span>
           <ExternalLink className="h-3 w-3" strokeWidth={2} />
-          {lastUpdated && (
-            <span className="text-text-muted/70">
-              {' '}· Updated {lastUpdated}
-            </span>
-          )}
+          {showUpdated}
         </a>
-      )}
+      ) : sourceName ? (
+        <div className="mt-2 text-xs text-text-muted">
+          <span>Source: {sourceName}</span>
+          {showUpdated}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -8,6 +8,7 @@ const links = [
   { href: '/search', label: 'Search' },
   { href: '/richest', label: 'Rankings' },
   { href: '/compare', label: 'Compare' },
+  { href: '/about', label: 'About' },
 ];
 
 export function Navigation() {
@@ -20,6 +21,7 @@ export function Navigation() {
           <Link
             key={link.href}
             href={link.href}
+            aria-current={isActive ? 'page' : undefined}
             className={clsx(
               'transition hover:text-brand-700',
               isActive && 'text-text-primary font-semibold'

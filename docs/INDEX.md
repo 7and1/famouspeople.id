@@ -18,6 +18,10 @@
 | [SEO-CONTENT-STRATEGY.md](./SEO-CONTENT-STRATEGY.md) | pSEO, schema.org, content templates | Content/SEO |
 | [DEPLOYMENT.md](./DEPLOYMENT.md) | Infrastructure, CI/CD, monitoring | DevOps |
 | [ROADMAP.md](./ROADMAP.md) | Development phases, task breakdown | PM/All |
+| [QUALITY-GATE.md](./QUALITY-GATE.md) | Production readiness checklist | PM/DevOps |
+| [SEO-AUDIT.md](./SEO-AUDIT.md) | Technical SEO audit + fixes | SEO/Dev |
+| [P2-OPTIMIZATION-PLAN.md](./P2-OPTIMIZATION-PLAN.md) | P0→P2 execution plan | PM/All |
+| [ADR-001-SITEMAP-RSS.md](./ADR-001-SITEMAP-RSS.md) | Sitemap/RSS architecture decision | Dev/SEO |
 
 ## Architecture Summary
 

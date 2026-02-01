@@ -7,25 +7,19 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/api/v1/'],
+        disallow: ['/api/', '/_next/'],
+        crawlDelay: 1,
       },
       {
-        userAgent: '*',
-        disallow: ['/*?sort=', '/*?filter=', '/*?page=10'],
+        userAgent: ['GPTBot', 'CCBot', 'ChatGPT-User', 'Google-Extended', 'anthropic-ai', 'Claude-Web'],
+        disallow: '/',
       },
       {
-        userAgent: '*',
-        allow: ['/*?page='],
-      },
-      {
-        userAgent: 'AhrefsBot',
-        crawlDelay: 10,
-      },
-      {
-        userAgent: 'SemrushBot',
+        userAgent: ['AhrefsBot', 'SemrushBot', 'DotBot'],
         crawlDelay: 10,
       },
     ],
     sitemap: `${siteUrl}/sitemap.xml`,
+    host: siteUrl,
   };
 }

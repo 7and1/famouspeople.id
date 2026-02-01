@@ -1,14 +1,11 @@
 import { apiFetch } from './client';
+import type { ApiPaginationMeta, PersonSummary, SearchFacets } from './types';
 
 export interface SearchResult {
-  data: any[];
+  data: PersonSummary[];
   meta: {
-    total: number;
-    page: number;
-    per_page: number;
-    has_next: boolean;
-    facets?: any;
-  };
+    facets?: SearchFacets;
+  } & ApiPaginationMeta;
 }
 
 export const searchPeople = async (params: Record<string, string | number | boolean | undefined>) => {

@@ -1,10 +1,11 @@
 import { Instagram, Youtube, Twitter } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 interface SocialLinksProps {
   links: Record<string, string | null | undefined>;
 }
 
-const iconMap: Record<string, any> = {
+const iconMap: Record<string, LucideIcon> = {
   twitter: Twitter,
   x: Twitter,
   instagram: Instagram,

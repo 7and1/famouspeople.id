@@ -35,7 +35,6 @@ export interface PaginationLinks {
 
 export function buildPaginationLinks({
   path,
-  searchParams = {},
   currentPage,
   totalPages,
   pageParam = 'page',
@@ -72,7 +71,7 @@ export function buildPaginatedMetadata({
   pageParam = 'page',
 }: CanonicalUrlOptions & { currentPage: number; totalPages: number }) {
   const canonical = buildCanonicalUrl({ path, searchParams, pageParam });
-  const links = buildPaginationLinks({ path, searchParams, currentPage, totalPages, pageParam });
+  const links = buildPaginationLinks({ path, currentPage, totalPages, pageParam });
 
   return {
     alternates: {

@@ -33,9 +33,19 @@ export const getRelationshipsBySlug = async (
 
   const { type, direction = 'both', limit = 50, offset = 0 } = options;
 
+  // Build base query with JOINs to eliminate N+1
   let query = supabase
     .from('relationships')
-    .select('source_fpid, target_fpid, relation_type, start_date, end_date');
+    .select(`
+      source_fpid,
+      target_fpid,
+      relation_type,
+      start_date,
+      end_date,
+      relation_types:relation_types!inner(code, label, reverse_label),
+      source:identities!source_fpid(fpid, slug, full_name, image_url, is_published),
+      target:identities!target_fpid(fpid, slug, full_name, image_url, is_published)
+    `);
 
   if (direction === 'outgoing') {
     query = query.eq('source_fpid', person.fpid);
@@ -51,21 +61,43 @@ export const getRelationshipsBySlug = async (
 
   query = query.range(offset, offset + limit - 1);
 
-  const [{ data: rels, error }, { data: relTypes }] = await Promise.all([
-    query,
-    supabase.from('relation_types').select('code, label, reverse_label'),
-  ]);
+  const { data: rels, error } = await query;
 
   if (error || !rels) return null;
 
-  const typeMap = new Map(
-    (relTypes || []).map((row: any) => [row.code, row])
-  );
+  const fpids = new Set<string>([person.fpid]);
+  const edges: RelationshipEdge[] = [];
+  const nodesMap = new Map<string, RelationshipNode>();
 
-  const edges: RelationshipEdge[] = rels.map((rel: any) => {
+  for (const rel of rels as any[]) {
     const isOutgoing = rel.source_fpid === person.fpid;
-    const meta = typeMap.get(rel.relation_type);
-    return {
+    const relatedPerson = isOutgoing ? rel.target : rel.source;
+
+    if (!relatedPerson?.is_published) continue;
+
+    fpids.add(rel.source_fpid);
+    fpids.add(rel.target_fpid);
+
+    // Build nodes map from joined data
+    if (rel.source && !nodesMap.has(rel.source.fpid)) {
+      nodesMap.set(rel.source.fpid, {
+        fpid: rel.source.fpid,
+        slug: rel.source.slug,
+        full_name: rel.source.full_name,
+        image_url: rel.source.image_url,
+      });
+    }
+    if (rel.target && !nodesMap.has(rel.target.fpid)) {
+      nodesMap.set(rel.target.fpid, {
+        fpid: rel.target.fpid,
+        slug: rel.target.slug,
+        full_name: rel.target.full_name,
+        image_url: rel.target.image_url,
+      });
+    }
+
+    const meta = rel.relation_types;
+    edges.push({
       source_fpid: rel.source_fpid,
       target_fpid: rel.target_fpid,
       relation_type: rel.relation_type,
@@ -73,31 +105,15 @@ export const getRelationshipsBySlug = async (
       start_date: rel.start_date,
       end_date: rel.end_date,
       direction: isOutgoing ? 'outgoing' : 'incoming',
-    };
-  });
+    });
+  }
 
-  const fpids = new Set<string>([person.fpid]);
-  edges.forEach((edge) => {
-    fpids.add(edge.source_fpid);
-    fpids.add(edge.target_fpid);
-  });
+  const nodes = Array.from(nodesMap.values());
 
-  const { data: nodesData } = await supabase
-    .from('identities')
-    .select('fpid, slug, full_name, image_url')
-    .in('fpid', Array.from(fpids))
-    .eq('is_published', true);
-
-  const nodes: RelationshipNode[] = (nodesData || []).map((row: any) => ({
-    fpid: row.fpid,
-    slug: row.slug,
-    full_name: row.full_name,
-    image_url: row.image_url,
-  }));
-
+  // Get total count efficiently
   const { count } = await supabase
     .from('relationships')
-    .select('id', { count: 'exact', head: true })
+    .select('*', { count: 'exact', head: true })
     .or(`source_fpid.eq.${person.fpid},target_fpid.eq.${person.fpid}`);
 
   return {

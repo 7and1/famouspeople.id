@@ -46,7 +46,7 @@ export function RelatedPeople({ people, currentSlug }: RelatedPeopleProps) {
     return null;
   }
 
-  const displayPeople = people.slice(0, 8);
+  const displayPeople = people.filter((p) => p.slug !== currentSlug).slice(0, 8);
 
   return (
     <section className="rounded-2xl border border-surface-border bg-white p-6 shadow-card">

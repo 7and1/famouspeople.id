@@ -12,7 +12,7 @@ FamousPeople.id is a high-performance celebrity database serving 10,000+ profile
     |                                                                  |
     |   +------------------+      +------------------+                 |
     |   | Cloudflare Pages |      | Cloudflare KV    |                 |
-    |   | (Next.js 14 SSR) |<---->| (Profile Cache)  |                 |
+    |   | (Next.js 16 SSR) |<---->| (Profile Cache)  |                 |
     |   +--------+---------+      +------------------+                 |
     |            |                                                     |
     |            v                                                     |
@@ -132,7 +132,7 @@ User Response (< 100ms target)
 
 | Aspect | Implementation |
 |--------|----------------|
-| Framework | Next.js 14+ (App Router) |
+| Framework | Next.js 16 (App Router) |
 | Runtime | Edge Runtime (not Node.js) |
 | Rendering | SSR with ISR fallback |
 | Styling | Tailwind CSS |

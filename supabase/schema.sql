@@ -369,3 +369,71 @@ grant execute on function public.search_people_count(text, text, text, text, tex
 grant execute on function public.search_people_facets(text, text, text, text, text, text, text, int, int, bigint, boolean) to anon, authenticated;
 grant execute on function public.get_birthdays_today(int, int) to anon, authenticated;
 grant execute on function public.get_birthdays_month(int, int, int) to anon, authenticated;
+
+-- ============================================
+-- Database Optimizations (2026-01-30)
+-- ============================================
+
+-- Composite indexes for category listings with sorting
+CREATE INDEX idx_identities_zodiac_net_worth
+ON identities(zodiac, net_worth DESC NULLS LAST)
+WHERE is_published = true;
+
+CREATE INDEX idx_identities_mbti_net_worth
+ON identities(mbti, net_worth DESC NULLS LAST)
+WHERE is_published = true;
+
+CREATE INDEX idx_identities_country_net_worth
+ON identities(country, net_worth DESC NULLS LAST)
+WHERE is_published = true;
+
+CREATE INDEX idx_identities_occupation_net_worth
+ON identities USING GIN (occupation)
+INCLUDE (net_worth, slug, full_name, image_url)
+WHERE is_published = true;
+
+-- pgvector similarity function
+CREATE OR REPLACE FUNCTION get_similar_people(
+  source_fpid text,
+  limit_count int DEFAULT 10
+)
+RETURNS TABLE(
+  fpid text,
+  slug text,
+  full_name text,
+  image_url text,
+  bio_summary text,
+  similarity float
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    i.fpid,
+    i.slug,
+    i.full_name,
+    i.image_url,
+    i.bio_summary,
+    1 - (i.embedding <=> (SELECT embedding FROM identities WHERE fpid = source_fpid)) as similarity
+  FROM identities i
+  WHERE i.fpid != source_fpid
+    AND i.is_published = true
+    AND i.embedding IS NOT NULL
+  ORDER BY i.embedding <=> (SELECT embedding FROM identities WHERE fpid = source_fpid)
+  LIMIT limit_count;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Grant execute for similar people function
+grant execute on function public.get_similar_people(text, int) to anon, authenticated;
+
+-- Materialized view for search facets
+CREATE MATERIALIZED VIEW search_facet_cache AS
+SELECT
+  zodiac,
+  unnest(country) as country,
+  COUNT(*) as count
+FROM identities
+WHERE is_published = true
+GROUP BY zodiac, country;
+
+CREATE INDEX idx_facet_cache ON search_facet_cache(zodiac, country);

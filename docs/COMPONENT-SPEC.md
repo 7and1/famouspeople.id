@@ -1,6 +1,6 @@
 # FamousPeople.id Frontend Component Specification
 
-> Next.js 14+ App Router | Tailwind CSS + shadcn/ui | Cloudflare Pages Edge Runtime
+> Next.js 16 App Router | Tailwind CSS + shadcn/ui | Cloudflare Pages Edge Runtime
 
 ---
 

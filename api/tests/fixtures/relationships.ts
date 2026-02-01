@@ -5,6 +5,9 @@ export const mockRelationshipRows = [
     relation_type: 'colleague',
     start_date: '2020-01-01',
     end_date: null,
+    relation_types: { code: 'colleague', label: 'Colleague', reverse_label: 'Colleague of' },
+    source: { fpid: 'FP-001', slug: 'elon-musk', full_name: 'Elon Musk', image_url: 'https://example.com/elon.jpg', is_published: true },
+    target: { fpid: 'FP-002', slug: 'jeff-bezos', full_name: 'Jeff Bezos', image_url: 'https://example.com/jeff.jpg', is_published: true },
   },
   {
     source_fpid: 'FP-002',
@@ -12,6 +15,9 @@ export const mockRelationshipRows = [
     relation_type: 'competitor',
     start_date: '2015-01-01',
     end_date: null,
+    relation_types: { code: 'competitor', label: 'Competitor', reverse_label: 'Competed with' },
+    source: { fpid: 'FP-002', slug: 'jeff-bezos', full_name: 'Jeff Bezos', image_url: 'https://example.com/jeff.jpg', is_published: true },
+    target: { fpid: 'FP-001', slug: 'elon-musk', full_name: 'Elon Musk', image_url: 'https://example.com/elon.jpg', is_published: true },
   },
   {
     source_fpid: 'FP-001',
@@ -19,6 +25,9 @@ export const mockRelationshipRows = [
     relation_type: 'friend',
     start_date: '2018-05-15',
     end_date: '2020-12-31',
+    relation_types: { code: 'friend', label: 'Friend', reverse_label: 'Friend of' },
+    source: { fpid: 'FP-001', slug: 'elon-musk', full_name: 'Elon Musk', image_url: 'https://example.com/elon.jpg', is_published: true },
+    target: { fpid: 'FP-003', slug: 'albert-einstein', full_name: 'Albert Einstein', image_url: 'https://example.com/einstein.jpg', is_published: true },
   },
 ];
 

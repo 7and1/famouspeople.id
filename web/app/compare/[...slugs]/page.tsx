@@ -1,12 +1,39 @@
 import { redirect } from 'next/navigation';
+import type { Metadata } from 'next';
 import { ComparisonLayout } from '../../../components/templates';
-import { ComparisonTable } from '../../../components/organisms';
+import { ComparisonTable } from '../../../components/organisms/ComparisonTable';
 import { comparePeople } from '../../../lib/api/compare';
 
 const normalizeCompareUrl = (slugs: string[]) => {
   const sorted = [...slugs].sort();
   return `/compare/${sorted.join('-vs-')}`;
 };
+
+export async function generateMetadata({ params }: { params: { slugs: string[] } }): Promise<Metadata> {
+  const raw = params.slugs.join('/');
+  const slugs = raw.split('-vs-').map((slug) => slug.trim()).filter(Boolean);
+  if (slugs.length < 2) {
+    return {
+      title: 'Compare Celebrities | FamousPeople.id',
+      description: 'Compare celebrities side by side on FamousPeople.id.',
+      robots: 'noindex, follow',
+      alternates: { canonical: '/compare' },
+    };
+  }
+
+  const canonical = normalizeCompareUrl(slugs);
+  const title = `Compare: ${slugs.join(' vs ')} | FamousPeople.id`;
+  const description = `Compare ${slugs.join(' vs ')} side by side: net worth, height, age, and key facts.`;
+
+  return {
+    title,
+    description,
+    robots: 'noindex, follow',
+    alternates: { canonical },
+    openGraph: { title, description, type: 'website' },
+    twitter: { card: 'summary', title, description },
+  };
+}
 
 export default async function ComparePage({ params }: { params: { slugs: string[] } }) {
   const raw = params.slugs.join('/');

@@ -12,7 +12,7 @@ interface RelationshipEdge {
   label?: string | null;
 }
 
-export function RelationshipGraph({ nodes, edges }: { nodes: RelationshipNode[]; edges: RelationshipEdge[] }) {
+export default function RelationshipGraph({ nodes, edges }: { nodes: RelationshipNode[]; edges: RelationshipEdge[] }) {
   return (
     <div className="rounded-2xl border border-surface-border bg-white p-6 shadow-card">
       <h3 className="text-sm font-semibold text-text-primary">Relationship Graph</h3>

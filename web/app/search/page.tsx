@@ -1,7 +1,8 @@
 import { SearchLayout } from '../../components/templates';
-import { PersonCard } from '../../components/organisms';
-import { SearchFilters, SearchPagination } from '../../components/organisms';
-import { SearchHero } from '../../components/organisms';
+import { PersonCard } from '../../components/organisms/PersonCard';
+import { SearchFilters } from '../../components/organisms/SearchFilters';
+import { SearchPagination } from '../../components/organisms/SearchPagination';
+import { SearchHero } from '../../components/organisms/SearchHero';
 import { searchPeople } from '../../lib/api/search';
 import { buildPaginatedMetadata } from '../../lib/seo/canonical';
 import { getSearchMetaDescription } from '../../lib/seo/meta-descriptions';
@@ -18,6 +19,8 @@ export async function generateMetadata({ searchParams }: { searchParams: Record<
     return {
       title: 'Search | FamousPeople.id',
       description: getSearchMetaDescription({ hasFilters }),
+      robots: 'noindex, follow',
+      alternates: { canonical: '/search' },
     };
   }
 
@@ -27,6 +30,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Record<
   return {
     title: `Search results for "${q}" ${page > 1 ? `| Page ${page}` : ''} | FamousPeople.id`,
     description: getSearchMetaDescription({ query: q, hasFilters }),
+    robots: 'noindex, follow',
     ...buildPaginatedMetadata({
       path,
       searchParams,
@@ -61,7 +65,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Recor
     sort: typeof searchParams.sort === 'string' ? searchParams.sort : undefined,
     limit,
     offset,
-  }).catch(() => ({ data: [], meta: { total: 0, page: 1, per_page: limit, has_next: false, facets: {} } }));
+  }).catch(() => ({ data: [], meta: { total: 0, page: 1, per_page: limit, has_next: false, facets: { country: [], zodiac: [] } } }));
 
   const totalPages = Math.ceil(result.meta.total / limit) || 1;
 

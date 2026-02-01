@@ -1,9 +1,11 @@
 import { ListingLayout } from '../../../components/templates';
-import { PersonCard, CategoryPagination } from '../../../components/organisms';
+import { PersonCard } from '../../../components/organisms/PersonCard';
+import { CategoryPagination } from '../../../components/organisms/CategoryPagination';
 import { ItemListSchema } from '../../../components/seo/ItemListSchema';
 import { getCategoryPeople } from '../../../lib/api/categories';
 import { buildCategoryMetadata } from '../../../lib/seo/metadata';
 import { buildPaginatedMetadata } from '../../../lib/seo/canonical';
+import { buildBreadcrumbSchema } from '../../../lib/seo/schema';
 import { ZODIAC_DESCRIPTIONS } from '../../../lib/seo/meta-descriptions';
 import type { Metadata } from 'next';
 
@@ -12,6 +14,9 @@ export async function generateMetadata({ params, searchParams }: { params: { sig
   const title = `Famous ${sign.charAt(0).toUpperCase() + sign.slice(1)} Celebrities`;
   const description = ZODIAC_DESCRIPTIONS[sign] || 'Explore celebrities by zodiac sign.';
   const page = Number(searchParams?.page || 1);
+
+  const result = await getCategoryPeople('zodiac', sign.charAt(0).toUpperCase() + sign.slice(1), 1, 0, 'net_worth:desc').catch(() => ({ data: [], meta: { total: 0 } }));
+  const totalPages = Math.ceil(result.meta.total / 20) || 1;
 
   if (page > 50) {
     return { ...buildCategoryMetadata(title, description), robots: 'noindex, nofollow' };
@@ -23,7 +28,7 @@ export async function generateMetadata({ params, searchParams }: { params: { sig
       path: `/zodiac/${sign}`,
       searchParams,
       currentPage: page,
-      totalPages: 50,
+      totalPages,
     }),
   };
 }
@@ -46,8 +51,18 @@ export default async function ZodiacPage({ params, searchParams }: { params: { s
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://famouspeople.id';
 
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { label: 'Home', href: '/' },
+    { label: 'Zodiac Signs', href: '/zodiac' },
+    { label: `${sign.charAt(0).toUpperCase() + sign.slice(1)} Celebrities`, href: `/zodiac/${sign}` },
+  ], siteUrl);
+
   return (
     <ListingLayout>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       <header className="rounded-2xl border border-surface-border bg-white p-6 shadow-card">
         <h1 className="text-2xl font-semibold text-text-primary">{sign.charAt(0).toUpperCase() + sign.slice(1)} Celebrities</h1>
         <p className="mt-2 text-sm text-text-secondary">{ZODIAC_DESCRIPTIONS[sign] || 'Explore celebrities by zodiac sign.'}</p>

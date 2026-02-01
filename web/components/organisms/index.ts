@@ -1,5 +1,7 @@
 export * from './CategoryGrid';
 export * from './ComparisonTable';
+export * from './CookieConsent';
+export * from './CookiePreferencesLink';
 export * from './FactGrid';
 export * from './FilterBar';
 export * from './PersonCard';

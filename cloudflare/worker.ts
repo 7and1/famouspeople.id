@@ -1,10 +1,11 @@
 /**
  * Cloudflare Workers entry point
- * This is a separate entry point that doesn't import Node.js dependencies
+ * Optimized for edge runtime with compression, caching, and rate limiting
  */
 
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { compress } from 'hono/compress';
 import type { AppEnv } from './types/app.js';
 import peopleRoutes from './routes/people.js';
 import searchRoutes from './routes/search.js';
@@ -19,6 +20,8 @@ import sitemapRoutes from './routes/sitemap.js';
 import birthdaysRoutes from './routes/birthdays.js';
 import { requestId } from './middleware/requestId.js';
 import { requestLogger } from './middleware/logger.js';
+import { edgeRateLimit } from './middleware/edgeRateLimit.js';
+import { getOrCompute, generateETag, isClientCacheFresh } from './lib/edge-cache.js';
 
 export interface Env {
   // Supabase Configuration
@@ -36,7 +39,7 @@ export interface Env {
   LOG_LEVEL?: string;
   SITE_URL?: string;
 
-  // Optional: Rate limiting
+  // Optional: Rate limiting (legacy Redis)
   UPSTASH_REDIS_URL?: string;
   UPSTASH_REDIS_TOKEN?: string;
 
@@ -44,8 +47,15 @@ export interface Env {
   OPENAI_API_KEY?: string;
   OPENAI_EMBEDDING_MODEL?: string;
 
-  // Cloudflare KV bindings (optional)
+  // Cloudflare KV bindings
   KV_CACHE?: KVNamespace;
+  KV_RATE_LIMIT?: KVNamespace;
+
+  // Cloudflare R2
+  R2_ASSETS?: R2Bucket;
+
+  // Analytics
+  ANALYTICS?: AnalyticsEngineDataset;
 }
 
 const createApp = (env: Env) => {
@@ -71,13 +81,22 @@ const createApp = (env: Env) => {
     },
   };
 
-  // Store KV binding globally for access in services
+  // Store KV bindings globally for access in services
   if (env.KV_CACHE) {
     (globalThis as any).KV_CACHE = env.KV_CACHE;
+  }
+  if (env.KV_RATE_LIMIT) {
+    (globalThis as any).KV_RATE_LIMIT = env.KV_RATE_LIMIT;
   }
 
   app.use('*', requestId);
   app.use('*', requestLogger);
+
+  // Compression middleware - gzip responses
+  app.use('*', compress({
+    encoding: 'gzip',
+    threshold: 1024, // Only compress responses > 1KB
+  }));
 
   const allowedOrigins = (env.ALLOWED_ORIGINS || 'https://famouspeople.id,https://www.famouspeople.id')
     .split(',')
@@ -92,7 +111,22 @@ const createApp = (env: Env) => {
     },
   }));
 
-  app.get('/health', (c) => c.json({ status: 'ok' }));
+  // Edge rate limiting by endpoint type
+  app.use('/api/v1/search/*', edgeRateLimit('search'));
+  app.use('/api/v1/compare', edgeRateLimit('heavy'));
+  app.use('/api/v1/people/*/similar', edgeRateLimit('heavy'));
+  app.use('/api/v1/sync/*', edgeRateLimit('internal'));
+  app.use('/api/v1/*', edgeRateLimit('default'));
+
+  // Health check with cache headers
+  app.get('/health', (c) => {
+    c.header('Cache-Control', 'public, max-age=10');
+    return c.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      version: '1.0.0',
+    });
+  });
 
   app.route('/api/v1', peopleRoutes);
   app.route('/api/v1', searchRoutes);
@@ -115,6 +149,18 @@ const createApp = (env: Env) => {
   }, 404));
 
   app.onError((err, c) => {
+    // Log to analytics if available
+    const analytics = (c.env as any)?.ANALYTICS;
+    if (analytics) {
+      c.executionCtx.waitUntil(
+        analytics.writeDataPoint({
+          blobs: [c.req.path, err.message || 'unknown'],
+          doubles: [1],
+          indexes: ['error'],
+        }).catch(() => {})
+      );
+    }
+
     return c.json({
       error: {
         code: 'INTERNAL_ERROR',
@@ -127,9 +173,52 @@ const createApp = (env: Env) => {
   return app;
 };
 
+// Cache helper for route handlers
+export const withCache = <T extends object>(
+  handler: (c: any) => Promise<T>,
+  cacheKey: string | ((c: any) => string),
+  ttlSeconds?: number
+) => {
+  return async (c: any) => {
+    const key = typeof cacheKey === 'function' ? cacheKey(c) : cacheKey;
+
+    // Try to get from cache
+    const { entry } = await import('./lib/edge-cache.js').then(m => m.getCached<T>(key));
+
+    if (entry) {
+      // Check ETag for conditional requests
+      const etag = generateETag(entry.value);
+      if (isClientCacheFresh(c, etag)) {
+        return c.body(null, 304);
+      }
+      c.header('ETag', etag);
+      c.header('X-Cache', 'HIT');
+      c.header('Cache-Control', `public, max-age=${ttlSeconds || 300}`);
+      return c.json(entry.value);
+    }
+
+    // Execute handler
+    const result = await handler(c);
+
+    // Store in cache using waitUntil
+    const etag = generateETag(result);
+    c.header('ETag', etag);
+    c.header('X-Cache', 'MISS');
+    c.header('Cache-Control', `public, max-age=${ttlSeconds || 300}`);
+
+    await setCached(c, key, result, { ttlSeconds });
+
+    return c.json(result);
+  };
+};
+
+// Import needed for withCache
+import { getCached, setCached } from './lib/edge-cache.js';
+
 export default {
   fetch: (request: Request, env: Env, ctx: ExecutionContext) => {
     const app = createApp(env);
-    return app.fetch(request);
+    // Pass execution context through env for access in handlers
+    return app.fetch(request, env, ctx);
   },
 };

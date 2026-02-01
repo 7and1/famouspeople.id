@@ -18,9 +18,12 @@ export interface PersonProfile {
   image_url: string | null;
   wikipedia_url: string | null;
   social_links: Record<string, string | null>;
+  data_sources?: Record<string, unknown>;
   bio_summary: string | null;
   content_md?: string | null;
   fame_tier?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
   age?: number | null;
   relationship_count?: number | null;
 }
@@ -33,7 +36,7 @@ export const getPersonBySlug = async (
   let query = supabase
     .from('identities')
     .select(
-      'fpid, slug, full_name, type, net_worth, height_cm, birth_date, death_date, country, mbti, zodiac, gender, occupation, image_url, wikipedia_url, social_links, bio_summary, content_md, fame_tier'
+      'fpid, slug, full_name, type, net_worth, height_cm, birth_date, death_date, country, mbti, zodiac, gender, occupation, image_url, wikipedia_url, social_links, data_sources, bio_summary, content_md, fame_tier, created_at, updated_at'
     )
     .eq('slug', slug);
 
@@ -51,6 +54,7 @@ export const getPersonBySlug = async (
     country: data.country || [],
     occupation: data.occupation || [],
     social_links: data.social_links || {},
+    data_sources: data.data_sources || {},
     age,
   };
 };
@@ -77,7 +81,7 @@ export const getPeopleBySlugs = async (
   let query = supabase
     .from('identities')
     .select(
-      'fpid, slug, full_name, type, net_worth, height_cm, birth_date, death_date, country, mbti, zodiac, gender, occupation, image_url, wikipedia_url, social_links, bio_summary, fame_tier'
+      'fpid, slug, full_name, type, net_worth, height_cm, birth_date, death_date, country, mbti, zodiac, gender, occupation, image_url, wikipedia_url, social_links, data_sources, bio_summary, fame_tier, created_at, updated_at'
     )
     .in('slug', slugs);
 
@@ -98,6 +102,7 @@ export const getPeopleBySlugs = async (
       country: row!.country || [],
       occupation: row!.occupation || [],
       social_links: row!.social_links || {},
+      data_sources: (row as unknown as { data_sources?: Record<string, unknown> }).data_sources || {},
       age: calculateAge(row!.birth_date, row!.death_date),
     })) as PersonProfile[];
 };

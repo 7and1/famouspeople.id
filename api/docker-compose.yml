@@ -16,8 +16,31 @@ services:
       - "8006:8006"
     networks:
       - supabase-tier
+      - proxy-tier
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 networks:
+  proxy-tier:
+    external: true
+    name: nginx-proxy_default
   supabase-tier:
     external: true
     name: supabase_default

@@ -1,17 +1,32 @@
 import { ListingLayout } from '../../../components/templates';
-import { PersonCard, CategoryPagination } from '../../../components/organisms';
+import { PersonCard } from '../../../components/organisms/PersonCard';
+import { CategoryPagination } from '../../../components/organisms/CategoryPagination';
 import { ItemListSchema } from '../../../components/seo/ItemListSchema';
 import { getCategoryPeople } from '../../../lib/api/categories';
 import { buildCategoryMetadata } from '../../../lib/seo/metadata';
+import { buildPaginatedMetadata } from '../../../lib/seo/canonical';
+import { buildBreadcrumbSchema } from '../../../lib/seo/schema';
 
 export async function generateMetadata({ params, searchParams }: { params: { slug: string }; searchParams: Record<string, string | string[] | undefined> }) {
   const name = params.slug.replace(/-/g, ' ');
-  const metadata = buildCategoryMetadata(`${name} Celebrities`, `Explore famous ${name} celebrities.`);
   const page = Number(searchParams?.page || 1);
+
+  const result = await getCategoryPeople('occupation', name, 1, 0, 'net_worth:desc').catch(() => ({ data: [], meta: { total: 0 } }));
+  const totalPages = Math.ceil(result.meta.total / 20) || 1;
+
+  const baseMetadata = buildCategoryMetadata(`${name} Celebrities`, `Explore famous ${name} celebrities.`);
+  const paginationMetadata = buildPaginatedMetadata({
+    path: `/occupation/${params.slug}`,
+    searchParams,
+    currentPage: page,
+    totalPages,
+  });
+
   if (page > 50) {
-    return { ...metadata, robots: 'noindex, nofollow' };
+    return { ...baseMetadata, ...paginationMetadata, robots: 'noindex, nofollow' };
   }
-  return metadata;
+
+  return { ...baseMetadata, ...paginationMetadata };
 }
 
 export default async function OccupationPage({ params, searchParams }: { params: { slug: string }; searchParams: Record<string, string | string[] | undefined> }) {
@@ -26,8 +41,18 @@ export default async function OccupationPage({ params, searchParams }: { params:
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://famouspeople.id';
 
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { label: 'Home', href: '/' },
+    { label: 'Occupations', href: '/occupation' },
+    { label: `${occupation} Celebrities`, href: `/occupation/${params.slug}` },
+  ], siteUrl);
+
   return (
     <ListingLayout>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       <header className="rounded-2xl border border-surface-border bg-white p-6 shadow-card">
         <h1 className="text-2xl font-semibold text-text-primary">{occupation} Celebrities</h1>
         <p className="mt-2 text-sm text-text-secondary">Explore famous people known for {occupation}.</p>

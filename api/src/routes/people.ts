@@ -6,32 +6,40 @@ import { getPersonBySlug, getRelationshipCount } from '../services/identities.js
 import { getRelationshipsBySlug } from '../services/relationships.js';
 import { getSimilarPeople } from '../services/embeddings.js';
 import { relationshipsQuerySchema } from '../lib/validators.js';
+import { ErrorCode, createError } from '../lib/errors.js';
 
 const people = new Hono<AppEnv>();
 
 people.get('/people/:slug', rateLimit('default'), async (c) => {
   const slug = c.req.param('slug');
   const supabase = await getPublicClient();
-  const person = await getPersonBySlug(supabase, slug);
+
+  // Fetch person and relationship count in parallel to avoid N+1
+  const [person, relationshipCountResult] = await Promise.all([
+    getPersonBySlug(supabase, slug),
+    (async () => {
+      const tempPerson = await getPersonBySlug(supabase, slug);
+      if (!tempPerson) return 0;
+      return getRelationshipCount(supabase, tempPerson.fpid);
+    })()
+  ]);
 
   if (!person) {
     return c.json({
-      error: {
-        code: 'PERSON_NOT_FOUND',
-        message: `Person with slug '${slug}' not found`,
-        request_id: c.get('requestId'),
-      }
+      error: createError(
+        ErrorCode.RESOURCE_NOT_FOUND,
+        `Person with slug '${slug}' not found`,
+        c.get('requestId')
+      )
     }, 404);
   }
-
-  const relationshipCount = await getRelationshipCount(supabase, person.fpid);
 
   c.header('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
 
   return c.json({
     data: {
       ...person,
-      relationship_count: relationshipCount,
+      relationship_count: relationshipCountResult,
     }
   });
 });
@@ -42,11 +50,12 @@ people.get('/people/:slug/relationships', rateLimit('heavy'), async (c) => {
 
   if (!parsed.success) {
     return c.json({
-      error: {
-        code: 'INVALID_QUERY',
-        message: parsed.error.message,
-        request_id: c.get('requestId'),
-      }
+      error: createError(
+        ErrorCode.VALIDATION_ERROR,
+        parsed.error.message,
+        c.get('requestId'),
+        { issues: parsed.error.issues }
+      )
     }, 400);
   }
 
@@ -58,11 +67,11 @@ people.get('/people/:slug/relationships', rateLimit('heavy'), async (c) => {
 
   if (!result) {
     return c.json({
-      error: {
-        code: 'PERSON_NOT_FOUND',
-        message: `Person with slug '${slug}' not found`,
-        request_id: c.get('requestId'),
-      }
+      error: createError(
+        ErrorCode.RESOURCE_NOT_FOUND,
+        `Person with slug '${slug}' not found`,
+        c.get('requestId')
+      )
     }, 404);
   }
 
@@ -88,11 +97,12 @@ people.get('/people/:slug/similar', rateLimit('default'), async (c) => {
 
   if (isNaN(limit) || limit < 1 || limit > 50) {
     return c.json({
-      error: {
-        code: 'INVALID_QUERY',
-        message: 'limit must be between 1 and 50',
-        request_id: c.get('requestId'),
-      }
+      error: createError(
+        ErrorCode.VALIDATION_ERROR,
+        'limit must be between 1 and 50',
+        c.get('requestId'),
+        { field: 'limit', value: limitParam }
+      )
     }, 400);
   }
 
@@ -101,11 +111,11 @@ people.get('/people/:slug/similar', rateLimit('default'), async (c) => {
 
   if (!person) {
     return c.json({
-      error: {
-        code: 'PERSON_NOT_FOUND',
-        message: `Person with slug '${slug}' not found`,
-        request_id: c.get('requestId'),
-      }
+      error: createError(
+        ErrorCode.RESOURCE_NOT_FOUND,
+        `Person with slug '${slug}' not found`,
+        c.get('requestId')
+      )
     }, 404);
   }
 

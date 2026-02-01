@@ -147,7 +147,7 @@ export async function generateMetadata({ params }) {
 
 ### Basic Frontend
 
-- [ ] Initialize Next.js 14+ with App Router
+- [ ] Initialize Next.js 16+ with App Router
   ```
   web/
   ├── app/

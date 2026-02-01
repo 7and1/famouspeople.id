@@ -1517,7 +1517,7 @@ SUPABASE_JWT_SECRET=your-jwt-secret
 
 # Redis (Upstash)
 UPSTASH_REDIS_URL=https://xxx.upstash.io
-UPSTASH_REDIS_TOKEN=xxx
+UPSTASH_REDIS_TOKEN=...
 
 # Cloudflare
 CF_ACCOUNT_ID=xxx
@@ -1525,7 +1525,7 @@ CF_KV_NAMESPACE_ID=xxx
 CF_API_TOKEN=xxx
 
 # OpenAI (for embeddings)
-OPENAI_API_KEY=sk-xxx
+OPENAI_API_KEY=sk-...
 
 # App
 LOG_LEVEL=info

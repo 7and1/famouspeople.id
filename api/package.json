@@ -21,7 +21,7 @@
     "@upstash/ratelimit": "^1.1.4",
     "@upstash/redis": "^1.25.1",
     "dotenv": "^16.4.5",
-    "hono": "^4.5.8",
+    "hono": "^4.11.7",
     "pino": "^9.3.2",
     "zod": "^3.23.8"
   },

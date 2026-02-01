@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import type { AppEnv } from '../types/app.js';
 import { getServiceClient } from '../lib/db.js';
-import { getSitemapPage } from '../services/sitemap.js';
+import { getSitemapDataPage, getSitemapPage } from '../services/sitemap.js';
+import { rateLimit } from '../middleware/rateLimit.js';
 
 const sitemap = new Hono<AppEnv>();
 
@@ -16,7 +17,7 @@ const escapeXml = (value: string) => value.replace(/[<>&'\"]/g, (char) => {
   }
 });
 
-sitemap.get('/sitemap/:page', async (c) => {
+sitemap.get('/sitemap/:page', rateLimit('heavy'), async (c) => {
   const pageNumber = Number(c.req.param('page'));
   if (!pageNumber || pageNumber < 1) {
     return c.text('Invalid sitemap page', 400);
@@ -43,6 +44,33 @@ sitemap.get('/sitemap/:page', async (c) => {
   c.header('Content-Type', 'application/xml');
   c.header('Cache-Control', 'public, max-age=3600');
   return c.text(body, 200);
+});
+
+sitemap.get('/sitemap-data/:page', rateLimit('heavy'), async (c) => {
+  const pageNumber = Number(c.req.param('page'));
+  if (!pageNumber || pageNumber < 1) {
+    return c.json({
+      error: {
+        code: 'INVALID_PAGE',
+        message: 'Invalid sitemap page',
+        request_id: c.get('requestId'),
+      }
+    }, 400);
+  }
+
+  const supabase = await getServiceClient();
+  const result = await getSitemapDataPage(supabase, pageNumber);
+
+  c.header('Cache-Control', 'public, max-age=3600');
+  return c.json({
+    people: result.people,
+    meta: {
+      total: result.total,
+      page: result.page,
+      per_page: result.per_page,
+      total_pages: Math.ceil(result.total / result.per_page) || 1,
+    },
+  });
 });
 
 export default sitemap;

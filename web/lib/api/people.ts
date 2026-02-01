@@ -1,10 +1,11 @@
 import { apiFetch } from './client';
+import type { PersonProfile } from './types';
 
 export interface PersonResponse {
-  data: any;
+  data: PersonProfile;
 }
 
-export const getPerson = async (slug: string) => {
+export const getPerson = async (slug: string): Promise<PersonProfile> => {
   const res = await apiFetch<PersonResponse>(`/people/${slug}`, {}, { revalidate: 86400 });
   return res.data;
 };

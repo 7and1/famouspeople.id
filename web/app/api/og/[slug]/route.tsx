@@ -2,9 +2,10 @@ import { ImageResponse } from '@vercel/og';
 
 export const runtime = 'edge';
 
-export async function GET(_: Request, { params }: { params: { slug: string } }) {
+export async function GET(_: Request, { params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8006/api/v1';
-  const res = await fetch(`${apiUrl}/people/${params.slug}`, { next: { revalidate: 86400 } });
+  const res = await fetch(`${apiUrl}/people/${slug}`, { next: { revalidate: 86400 } });
   const payload = res.ok ? await res.json() : null;
   const person = payload?.data;
 

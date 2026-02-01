@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import logger from './logger.js';
 
 type ClientType = 'public' | 'service';
 
@@ -11,17 +12,73 @@ interface CachedClient {
 let cachedClients: Partial<Record<ClientType, CachedClient>> = {};
 
 const HEALTH_CHECK_INTERVAL = 30000; // 30 seconds
+const SLOW_QUERY_THRESHOLD = 500; // ms
+
+/**
+ * Log slow queries for monitoring
+ */
+const logSlowQuery = (
+  operation: string,
+  table: string,
+  durationMs: number,
+  details?: Record<string, unknown>
+): void => {
+  logger.warn({
+    event: 'slow_query',
+    operation,
+    table,
+    duration_ms: Math.round(durationMs * 100) / 100,
+    threshold_ms: SLOW_QUERY_THRESHOLD,
+    ...details,
+  });
+};
+
+/**
+ * Wrap a query function to measure execution time
+ */
+export const timedQuery = async <T>(
+  operation: string,
+  table: string,
+  queryFn: () => Promise<T>,
+  details?: Record<string, unknown>
+): Promise<T> => {
+  const start = performance.now();
+  try {
+    const result = await queryFn();
+    const duration = performance.now() - start;
+    if (duration > SLOW_QUERY_THRESHOLD) {
+      logSlowQuery(operation, table, duration, details);
+    }
+    return result;
+  } catch (error) {
+    const duration = performance.now() - start;
+    logger.error({
+      event: 'query_error',
+      operation,
+      table,
+      duration_ms: Math.round(duration * 100) / 100,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      ...details,
+    });
+    throw error;
+  }
+};
 
 /**
  * Validate Supabase connection with simple query
  */
 const validateConnection = async (client: SupabaseClient): Promise<boolean> => {
+  const start = performance.now();
   try {
     // Try a simple table query first
     const { error: tableError } = await client
       .from('identities')
       .select('fpid')
       .limit(1);
+    const duration = performance.now() - start;
+    if (duration > SLOW_QUERY_THRESHOLD) {
+      logSlowQuery('validateConnection', 'identities', duration);
+    }
     return !tableError;
   } catch {
     // Connection validation failed, but client may still work for some operations
@@ -31,12 +88,17 @@ const validateConnection = async (client: SupabaseClient): Promise<boolean> => {
 
 /**
  * Build Supabase client with optimized configuration
+ * Includes pgbouncer support for connection pooling
  */
 const buildSupabaseClient = (key: string): SupabaseClient => {
   const url = process.env.SUPABASE_URL;
   if (!url) {
     throw new Error('SUPABASE_URL not configured');
   }
+
+  // Check if using connection pooler (port 6543)
+  const dbUrl = process.env.DATABASE_URL;
+  const isUsingPooler = dbUrl?.includes(':6543') ?? false;
 
   return createClient(url, key, {
     auth: {
@@ -47,6 +109,12 @@ const buildSupabaseClient = (key: string): SupabaseClient => {
     global: {
       fetch,
     },
+    // Enable pgbouncer mode when using connection pooler
+    ...(isUsingPooler && {
+      db: {
+        schema: process.env.DATABASE_SCHEMA || 'public',
+      },
+    }),
   }) as SupabaseClient;
 };
 

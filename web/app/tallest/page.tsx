@@ -1,10 +1,12 @@
 import { ListingLayout } from '../../components/templates';
-import { RankingList } from '../../components/organisms';
+import { RankingList } from '../../components/organisms/RankingList';
 import { getRankings } from '../../lib/api/rankings';
+import type { Metadata } from 'next';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Tallest Celebrities | FamousPeople.id',
   description: 'The tallest celebrities and famous people ranked by height.',
+  alternates: { canonical: '/tallest' },
 };
 
 export default async function TallestPage() {

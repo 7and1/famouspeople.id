@@ -71,6 +71,21 @@ export interface SimilarPerson {
   similarity_score: number;
 }
 
+// Calculate cosine similarity between two vectors
+const cosineSimilarity = (a: number[], b: number[]): number => {
+  if (a.length !== b.length) return 0;
+  let dot = 0;
+  let normA = 0;
+  let normB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+  if (normA === 0 || normB === 0) return 0;
+  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+};
+
 export const getSimilarPeople = async (
   supabase: SupabaseClient,
   fpid: string,
@@ -78,50 +93,26 @@ export const getSimilarPeople = async (
 ): Promise<SimilarPerson[]> => {
   const normalizedLimit = Math.min(Math.max(1, limit), 50);
 
-  const { data, error } = await supabase
-    .from('identities')
-    .select('fpid, slug, full_name, image_url, bio_summary, embedding')
-    .eq('is_published', true)
-    .not('embedding', 'is', null);
+  // Try RPC first (O(1) vs O(n))
+  const { data: rpcData, error: rpcError } = await supabase.rpc('get_similar_people', {
+    source_fpid: fpid,
+    limit_count: normalizedLimit
+  });
 
-  if (error || !data) {
-    throw new Error(`Failed to get similar people: ${error?.message || 'No data'}`);
+  if (!rpcError && rpcData) {
+    return rpcData.map((row: any) => ({
+      fpid: row.fpid,
+      slug: row.slug,
+      full_name: row.full_name,
+      image_url: row.image_url,
+      bio_summary: row.bio_summary,
+      similarity_score: row.similarity,
+    }));
   }
 
-  const sourceRow = data.find((row: any) => row.fpid === fpid);
-  if (!sourceRow || !sourceRow.embedding) {
-    return [];
-  }
-
-  const sourceEmbedding = sourceRow.embedding as number[];
-
-  const similarities = data
-    .filter((row: any) => row.fpid !== fpid && row.embedding)
-    .map((row: any) => {
-      const targetEmbedding = row.embedding as number[];
-      let dotProduct = 0;
-      let normA = 0;
-      let normB = 0;
-
-      for (let i = 0; i < sourceEmbedding.length; i++) {
-        dotProduct += sourceEmbedding[i] * targetEmbedding[i];
-        normA += sourceEmbedding[i] * sourceEmbedding[i];
-        normB += targetEmbedding[i] * targetEmbedding[i];
-      }
-
-      const similarity = dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-
-      return {
-        fpid: row.fpid,
-        slug: row.slug,
-        full_name: row.full_name,
-        image_url: row.image_url,
-        bio_summary: row.bio_summary,
-        similarity_score: similarity,
-      };
-    })
-    .sort((a, b) => b.similarity_score - a.similarity_score)
-    .slice(0, normalizedLimit);
-
-  return similarities;
+  // CRITICAL: Fallback disabled - loading all embeddings into memory is dangerous
+  // This could cause OOM errors with 10,000+ profiles
+  // If RPC fails, return empty array instead of attempting JS calculation
+  console.warn(`[EMBEDDINGS] RPC get_similar_people failed for ${fpid}, returning empty results. Error: ${rpcError?.message}`);
+  return [];
 };

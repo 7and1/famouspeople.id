@@ -5,7 +5,7 @@ Production-ready celebrity database with API, frontend, and data pipeline. Servi
 ## Structure
 
 - `api/` – Hono API (VPS container, port 8006)
-- `web/` – Next.js 14 App Router (Cloudflare Pages)
+- `web/` – Next.js 16 App Router (Cloudflare Pages)
 - `scripts/` – Wikidata import + Supabase sync
 - `supabase/` – Schema + RPC functions
 - `docs/` – Architecture, specs, roadmap
@@ -18,14 +18,19 @@ Production-ready celebrity database with API, frontend, and data pipeline. Servi
 - Connection pooling with Supabase (port 6543 for Transaction Mode)
 - Health check endpoint at `/health`
 - Rate limiting middleware
-- 218 test cases (integration + unit)
+- 195+ test cases (integration + unit)
 
 ### Frontend
-- Server-side rendering with Next.js 14 App Router
+- Server-side rendering with Next.js 16 App Router
 - SEO-optimized with FAQ schema, ItemList schema, and structured data
 - Dynamic meta descriptions and canonical URLs
 - robots.txt configuration for crawler control
 - Components: RelatedPeople, SimilarByAttribute, FactWithCitation
+
+### SEO Tooling
+- `node scripts/seo/validate.mjs --start-local` (robots/sitemap/rss + homepage quality gate)
+- `node scripts/seo/competitor-audit.mjs` (competitor metrics snapshot)
+- `node scripts/seo/keyword-opportunities.mjs` (top 20 keyword clusters; optional Keywords Everywhere API)
 
 ### Data Pipeline
 - Wikidata bulk import
@@ -74,8 +79,10 @@ npm run build  # Production build
 | `/api/v1/search` | GET | Full-text search with filters |
 | `/api/v1/rankings/:category` | GET | Leaderboards (net-worth, height, etc.) |
 | `/api/v1/compare` | GET | Side-by-side comparison |
+| `/api/v1/latest` | GET | Latest updated profiles |
 | `/api/v1/sync/upsert` | POST | Bulk upsert (service role) |
-| `/api/v1/sitemap` | GET | Dynamic sitemap XML |
+| `/api/v1/sitemap/:page` | GET | People sitemap XML (paged) |
+| `/api/v1/sitemap-data/:page` | GET | People sitemap JSON (paged, used by web sitemap) |
 
 ## Notes
 

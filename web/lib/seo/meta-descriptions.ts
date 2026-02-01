@@ -1,4 +1,4 @@
-import { formatCurrencyShort, formatDate } from '../utils/format';
+import { formatCurrencyShort } from '../utils/format';
 
 const MAX_LENGTH = 160;
 
@@ -41,44 +41,25 @@ export function getProfileMetaDescription(person: {
   mbti?: string | null;
   country?: string[] | null;
 }): string {
-  const parts: string[] = [];
+  const facts: string[] = [];
 
-  // Name and key fact
   const age = calculateAge(person.birth_date);
-  const ageText = age ? `${age}-year-old` : '';
+  if (person.net_worth) facts.push(`net worth (${formatCurrencyShort(person.net_worth)})`);
+  if (person.height_cm) facts.push(`height (${person.height_cm} cm)`);
+  if (age) facts.push(`age (${age})`);
+  if (person.zodiac) facts.push(`${person.zodiac} zodiac`);
+  if (person.mbti) facts.push(`${person.mbti} MBTI`);
 
-  const occupations = person.occupation?.slice(0, 2).join(' & ') || '';
-  const occupationText = occupations ? `${occupations}` : 'celebrity';
+  const occupations = person.occupation?.slice(0, 2).join(' & ');
+  const intro = occupations
+    ? `Discover ${person.full_name}, a ${occupations}.`
+    : `Discover ${person.full_name}.`;
 
-  if (ageText && occupations) {
-    parts.push(`${person.full_name} is a ${ageText} ${occupationText}`);
-  } else if (ageText) {
-    parts.push(`${person.full_name} is a ${ageText} ${occupationText}`);
-  } else {
-    parts.push(`${person.full_name} is a ${occupationText}`);
-  }
+  const details = facts.length
+    ? `Key facts: ${facts.join(', ')}.`
+    : 'Key facts, biography, and relationships.';
 
-  // Net worth
-  if (person.net_worth) {
-    parts.push(`with ${formatCurrencyShort(person.net_worth)} net worth`);
-  }
-
-  // Height
-  if (person.height_cm) {
-    parts.push(`${person.height_cm} cm tall`);
-  }
-
-  // Additional facts
-  const extras: string[] = [];
-  if (person.zodiac) extras.push(`${person.zodiac} zodiac`);
-  if (person.mbti) extras.push(`${person.mbti} MBTI`);
-
-  if (extras.length) {
-    parts.push(`(${extras.join(', ')})`);
-  }
-
-  const description = parts.join(' ') + '.';
-  return truncate(description);
+  return truncate(`${intro} ${details}`);
 }
 
 /**
