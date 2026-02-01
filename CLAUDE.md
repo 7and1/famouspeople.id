@@ -9,7 +9,7 @@ FamousPeople.id is a celebrity database serving 10,000+ profiles through a distr
 ### Architecture
 
 ```
-Cloudflare Pages (Next.js 14) → Cloudflare Tunnel → VPS API (Hono, port 8006) → Supabase PostgreSQL
+Cloudflare Pages (Next.js 16) → Cloudflare Tunnel → VPS API (Hono, port 8006) → Supabase PostgreSQL
                                       ↓
                                Cloudflare KV Cache
 ```
@@ -19,7 +19,7 @@ Cloudflare Pages (Next.js 14) → Cloudflare Tunnel → VPS API (Hono, port 8006
 | Directory | Purpose |
 |-----------|---------|
 | `api/` | Hono backend API (TypeScript/Node.js) |
-| `web/` | Next.js 14 frontend (App Router) |
+| `web/` | Next.js 16 frontend (App Router) |
 | `scripts/` | Python data pipeline (Wikidata import, Supabase sync) |
 | `supabase/` | Database schema and migrations |
 | `docs/` | Architecture specs, roadmap, deployment guides |
@@ -73,13 +73,9 @@ This project uses Supabase with connection pooling. Use the correct connection m
 | Session (Direct) | 5432 | Long-running scripts, migrations |
 | Transaction (Pooled) | 6543 | Edge Functions, Serverless, API |
 
-```bash
-# For API/Edge (port 6543)
-DATABASE_URL=postgresql://postgres:xxx@db.xxx.supabase.co:6543/postgres?pgbouncer=true
-
-# For scripts/migrations (port 5432)
-DATABASE_URL=postgresql://postgres:xxx@db.xxx.supabase.co:5432/postgres
-```
+Connection string format:
+- Transaction Mode (port 6543): For API/Edge/Serverless with pgbouncer=true
+- Session Mode (port 5432): For long-running scripts and migrations
 
 ## API Routes (Port 8006)
 
@@ -93,8 +89,10 @@ DATABASE_URL=postgresql://postgres:xxx@db.xxx.supabase.co:5432/postgres
 | `/api/v1/rankings/:category` | GET | Leaderboards (net-worth, height, etc.) |
 | `/api/v1/compare` | GET | Side-by-side comparison |
 | `/api/v1/categories/:type/:value` | GET | Category listings (zodiac, MBTI, occupation) |
+| `/api/v1/latest` | GET | Latest updated profiles |
 | `/api/v1/sync/upsert` | POST | Bulk upsert (service role) |
-| `/api/v1/sitemap` | GET | Dynamic sitemap XML |
+| `/api/v1/sitemap/:page` | GET | People sitemap XML (paged) |
+| `/api/v1/sitemap-data/:page` | GET | People sitemap JSON (paged, used by web sitemap) |
 
 ## Environment Variables
 
@@ -109,7 +107,7 @@ SUPABASE_JWT_SECRET=your-jwt-secret
 
 # Database Connection Pooling (CRITICAL)
 # Use port 6543 for Transaction Mode (serverless/edge)
-DATABASE_URL=postgresql://postgres:xxx@db.xxx.supabase.co:6543/postgres
+DATABASE_URL=<see .env.example>
 DATABASE_SCHEMA=public
 
 # API Configuration
