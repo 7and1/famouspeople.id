@@ -1,53 +1,13 @@
-# Dependencies
 node_modules
-npm-debug.log
-yarn-error.log
-package-lock.json
-
-# Build output
 dist
-.build
-.next
-out
-
-# Environment files
+tests
 .env
-.env.local
-.env.*.local
-
-# Testing
-coverage
-.nyc_output
-*.test.js
-*.test.ts
-*.spec.js
-*.spec.ts
-test/
-tests/
-__tests__/
-
-# IDE
-.vscode
-.idea
-*.swp
-*.swo
-.DS_Store
-
-# Git
-.git
-.gitignore
-.github
-
-# CI/CD
-.gitlab-ci.yml
-.travis.yml
-
-# Docs
-README.md
-*.md
-docs/
-
-# Misc
+.env.*
 *.log
-tmp/
-temp/
+.DS_Store
+.vscode
+coverage
+.wrangler
+wrangler.toml
+src/worker.ts
+
