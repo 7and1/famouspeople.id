@@ -1,7 +1,7 @@
 import { SearchLayout } from '../../components/templates';
 import { PersonCard } from '../../components/organisms/PersonCard';
-import { SearchFilters } from '../../components/organisms/SearchFilters';
-import { SearchPagination } from '../../components/organisms/SearchPagination';
+import { SearchFiltersWrapper } from '../../components/organisms/SearchFiltersWrapper';
+import { SearchPaginationWrapper } from '../../components/organisms/SearchPaginationWrapper';
 import { SearchHero } from '../../components/organisms/SearchHero';
 import { searchPeople } from '../../lib/api/search';
 import { buildPaginatedMetadata } from '../../lib/seo/canonical';
@@ -73,7 +73,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Recor
     <SearchLayout>
       <SearchHero query={q} />
 
-      <SearchFilters facets={result.meta.facets} totalResults={result.meta.total} />
+      <SearchFiltersWrapper facets={result.meta.facets} totalResults={result.meta.total} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {result.data.map((person) => (
@@ -87,7 +87,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Recor
         </div>
       )}
 
-      <SearchPagination currentPage={page} totalPages={totalPages} />
+      <SearchPaginationWrapper currentPage={page} totalPages={totalPages} />
     </SearchLayout>
   );
 }

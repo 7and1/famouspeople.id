@@ -1,6 +1,6 @@
 import { ListingLayout } from '../../../components/templates';
 import { PersonCard } from '../../../components/organisms/PersonCard';
-import { CategoryPagination } from '../../../components/organisms/CategoryPagination';
+import { CategoryPaginationWrapper } from '../../../components/organisms/CategoryPaginationWrapper';
 import { ItemListSchema } from '../../../components/seo/ItemListSchema';
 import { getCategoryPeople } from '../../../lib/api/categories';
 import { buildCategoryMetadata } from '../../../lib/seo/metadata';
@@ -14,8 +14,6 @@ const zodiacSigns = ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 'lib
 export async function generateStaticParams() {
   return zodiacSigns.map((sign) => ({ sign }));
 }
-
-export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params, searchParams }: { params: Promise<{ sign: string }>; searchParams: Record<string, string | string[] | undefined> }): Promise<Metadata> {
   const { sign } = await params;
@@ -80,7 +78,7 @@ export default async function ZodiacPage({ params, searchParams }: { params: Pro
           <PersonCard key={person.fpid} {...person} showQuickFacts />
         ))}
       </div>
-      <CategoryPagination currentPage={page} totalPages={totalPages} />
+      <CategoryPaginationWrapper currentPage={page} totalPages={totalPages} />
       <ItemListSchema items={result.data} offset={offset} siteUrl={siteUrl} />
     </ListingLayout>
   );

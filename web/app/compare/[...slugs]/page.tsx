@@ -14,8 +14,6 @@ export async function generateStaticParams() {
   return [{ slugs: ['elon-musk', 'jeff-bezos'] }];
 }
 
-export const dynamic = 'force-dynamic';
-
 export async function generateMetadata({ params }: { params: Promise<{ slugs: string[] }> }): Promise<Metadata> {
   const { slugs: slugsParam } = await params;
   const raw = slugsParam.join('/');

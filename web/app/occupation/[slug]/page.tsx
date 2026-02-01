@@ -1,6 +1,6 @@
 import { ListingLayout } from '../../../components/templates';
 import { PersonCard } from '../../../components/organisms/PersonCard';
-import { CategoryPagination } from '../../../components/organisms/CategoryPagination';
+import { CategoryPaginationWrapper } from '../../../components/organisms/CategoryPaginationWrapper';
 import { ItemListSchema } from '../../../components/seo/ItemListSchema';
 import { getCategoryPeople } from '../../../lib/api/categories';
 import { buildCategoryMetadata } from '../../../lib/seo/metadata';
@@ -12,8 +12,6 @@ export async function generateStaticParams() {
   const topOccupations = ['actor', 'musician', 'athlete', 'politician', 'entrepreneur', 'singer', 'director', 'writer', 'model', 'comedian'];
   return topOccupations.map((slug) => ({ slug }));
 }
-
-export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Record<string, string | string[] | undefined> }) {
   const { slug } = await params;
@@ -72,7 +70,7 @@ export default async function OccupationPage({ params, searchParams }: { params:
           <PersonCard key={person.fpid} {...person} showQuickFacts />
         ))}
       </div>
-      <CategoryPagination currentPage={page} totalPages={totalPages} />
+      <CategoryPaginationWrapper currentPage={page} totalPages={totalPages} />
       <ItemListSchema items={result.data} offset={offset} siteUrl={siteUrl} />
     </ListingLayout>
   );

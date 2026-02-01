@@ -1,6 +1,6 @@
 import { ListingLayout } from '../../../components/templates';
 import { PersonCard } from '../../../components/organisms/PersonCard';
-import { CategoryPagination } from '../../../components/organisms/CategoryPagination';
+import { CategoryPaginationWrapper } from '../../../components/organisms/CategoryPaginationWrapper';
 import { ItemListSchema } from '../../../components/seo/ItemListSchema';
 import { getCategoryPeople } from '../../../lib/api/categories';
 import { buildCategoryMetadata } from '../../../lib/seo/metadata';
@@ -14,8 +14,6 @@ const mbtiTypes = ['INTJ', 'INTP', 'ENTJ', 'ENTP', 'INFJ', 'INFP', 'ENFJ', 'ENFP
 export async function generateStaticParams() {
   return mbtiTypes.map((type) => ({ type: type.toLowerCase() }));
 }
-
-export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params, searchParams }: { params: Promise<{ type: string }>; searchParams: Record<string, string | string[] | undefined> }): Promise<Metadata> {
   const { type } = await params;
@@ -75,7 +73,7 @@ export default async function MbtiPage({ params, searchParams }: { params: Promi
           <PersonCard key={person.fpid} {...person} showQuickFacts />
         ))}
       </div>
-      <CategoryPagination currentPage={page} totalPages={totalPages} />
+      <CategoryPaginationWrapper currentPage={page} totalPages={totalPages} />
       <ItemListSchema items={result.data} offset={offset} siteUrl={siteUrl} />
     </ListingLayout>
   );
