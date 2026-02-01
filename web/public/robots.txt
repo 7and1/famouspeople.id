@@ -1,0 +1,24 @@
+# FamousPeople.id Robots.txt
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /_next/
+Crawl-delay: 1
+
+# AI Crawlers - Block
+User-agent: GPTBot
+User-agent: CCBot
+User-agent: ChatGPT-User
+User-agent: Google-Extended
+User-agent: anthropic-ai
+User-agent: Claude-Web
+Disallow: /
+
+# SEO Tools - Rate limit
+User-agent: AhrefsBot
+User-agent: SemrushBot
+User-agent: DotBot
+Crawl-delay: 10
+
+Sitemap: https://famouspeople.id/sitemap.xml
+Host: https://famouspeople.id

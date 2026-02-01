@@ -7,8 +7,17 @@ import { buildCategoryMetadata } from '../../../lib/seo/metadata';
 import { buildPaginatedMetadata } from '../../../lib/seo/canonical';
 import { buildBreadcrumbSchema } from '../../../lib/seo/schema';
 
-export async function generateMetadata({ params, searchParams }: { params: { slug: string }; searchParams: Record<string, string | string[] | undefined> }) {
-  const name = params.slug.replace(/-/g, ' ');
+// Generate static params for top occupations only
+export async function generateStaticParams() {
+  const topOccupations = ['actor', 'musician', 'athlete', 'politician', 'entrepreneur', 'singer', 'director', 'writer', 'model', 'comedian'];
+  return topOccupations.map((slug) => ({ slug }));
+}
+
+export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Record<string, string | string[] | undefined> }) {
+  const { slug } = await params;
+  const name = slug.replace(/-/g, ' ');
   const page = Number(searchParams?.page || 1);
 
   const result = await getCategoryPeople('occupation', name, 1, 0, 'net_worth:desc').catch(() => ({ data: [], meta: { total: 0 } }));
@@ -16,7 +25,7 @@ export async function generateMetadata({ params, searchParams }: { params: { slu
 
   const baseMetadata = buildCategoryMetadata(`${name} Celebrities`, `Explore famous ${name} celebrities.`);
   const paginationMetadata = buildPaginatedMetadata({
-    path: `/occupation/${params.slug}`,
+    path: `/occupation/${slug}`,
     searchParams,
     currentPage: page,
     totalPages,
@@ -29,8 +38,9 @@ export async function generateMetadata({ params, searchParams }: { params: { slu
   return { ...baseMetadata, ...paginationMetadata };
 }
 
-export default async function OccupationPage({ params, searchParams }: { params: { slug: string }; searchParams: Record<string, string | string[] | undefined> }) {
-  const occupation = params.slug.replace(/-/g, ' ');
+export default async function OccupationPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Record<string, string | string[] | undefined> }) {
+  const { slug } = await params;
+  const occupation = slug.replace(/-/g, ' ');
   const page = Number(searchParams.page || 1);
   const limit = 20;
   const offset = (page - 1) * limit;
@@ -44,7 +54,7 @@ export default async function OccupationPage({ params, searchParams }: { params:
   const breadcrumbSchema = buildBreadcrumbSchema([
     { label: 'Home', href: '/' },
     { label: 'Occupations', href: '/occupation' },
-    { label: `${occupation} Celebrities`, href: `/occupation/${params.slug}` },
+    { label: `${occupation} Celebrities`, href: `/occupation/${slug}` },
   ], siteUrl);
 
   return (

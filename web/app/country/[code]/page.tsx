@@ -7,8 +7,17 @@ import { buildCategoryMetadata } from '../../../lib/seo/metadata';
 import { buildPaginatedMetadata } from '../../../lib/seo/canonical';
 import { buildBreadcrumbSchema } from '../../../lib/seo/schema';
 
-export async function generateMetadata({ params, searchParams }: { params: { code: string }; searchParams: Record<string, string | string[] | undefined> }) {
-  const countryName = params.code.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+// Generate static params for top countries only
+export async function generateStaticParams() {
+  const topCountries = ['united-states', 'united-kingdom', 'canada', 'australia', 'india', 'china', 'japan', 'south-korea', 'france', 'germany'];
+  return topCountries.map((code) => ({ code }));
+}
+
+export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params, searchParams }: { params: Promise<{ code: string }>; searchParams: Record<string, string | string[] | undefined> }) {
+  const { code } = await params;
+  const countryName = code.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   const page = Number(searchParams?.page || 1);
 
   const result = await getCategoryPeople('country', countryName, 1, 0, 'net_worth:desc').catch(() => ({ data: [], meta: { total: 0 } }));
@@ -16,7 +25,7 @@ export async function generateMetadata({ params, searchParams }: { params: { cod
 
   const baseMetadata = buildCategoryMetadata(`Famous People from ${countryName}`, `Explore celebrities from ${countryName}.`);
   const paginationMetadata = buildPaginatedMetadata({
-    path: `/country/${params.code}`,
+    path: `/country/${code}`,
     searchParams,
     currentPage: page,
     totalPages,
@@ -29,8 +38,9 @@ export async function generateMetadata({ params, searchParams }: { params: { cod
   return { ...baseMetadata, ...paginationMetadata };
 }
 
-export default async function CountryPage({ params, searchParams }: { params: { code: string }; searchParams: Record<string, string | string[] | undefined> }) {
-  const countryName = params.code.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+export default async function CountryPage({ params, searchParams }: { params: Promise<{ code: string }>; searchParams: Record<string, string | string[] | undefined> }) {
+  const { code } = await params;
+  const countryName = code.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   const page = Number(searchParams.page || 1);
   const limit = 20;
   const offset = (page - 1) * limit;
@@ -44,7 +54,7 @@ export default async function CountryPage({ params, searchParams }: { params: { 
   const breadcrumbSchema = buildBreadcrumbSchema([
     { label: 'Home', href: '/' },
     { label: 'Countries', href: '/country' },
-    { label: `Famous People from ${countryName}`, href: `/country/${params.code}` },
+    { label: `Famous People from ${countryName}`, href: `/country/${code}` },
   ], siteUrl);
 
   return (

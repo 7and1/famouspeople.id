@@ -6,8 +6,16 @@ import { RelationshipCard } from '../../../components/organisms/RelationshipCard
 import { getReleasedTiers } from '../../../lib/utils/release';
 import type { RelationshipEdge, RelationshipNode } from '../../../lib/api/types';
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const person = await getPerson(params.slug).catch(() => null);
+// Generate static params for top people only
+export async function generateStaticParams() {
+  return [{ slug: 'elon-musk' }];
+}
+
+export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const person = await getPerson(slug).catch(() => null);
   if (!person) {
     return {
       title: 'Relationships | FamousPeople.id',
@@ -34,8 +42,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   };
 }
 
-export default async function RelationshipsPage({ params }: { params: { slug: string } }) {
-  const person = await getPerson(params.slug).catch(() => null);
+export default async function RelationshipsPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const person = await getPerson(slug).catch(() => null);
   if (!person) {
     return (
       <ListingLayout>
@@ -46,7 +55,7 @@ export default async function RelationshipsPage({ params }: { params: { slug: st
     );
   }
 
-  const relationships = await getRelationships(params.slug).catch(() => ({ nodes: [], edges: [] }));
+  const relationships = await getRelationships(slug).catch(() => ({ nodes: [], edges: [] }));
 
   return (
       <ListingLayout>

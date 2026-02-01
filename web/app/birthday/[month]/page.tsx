@@ -4,8 +4,8 @@ import { PersonCard } from '../../../components/organisms/PersonCard';
 import { getBirthdaysMonth } from '../../../lib/api/birthdays';
 import { buildCanonicalUrl } from '../../../lib/seo/canonical';
 
-export async function generateMetadata({ params }: { params: { month: string } }): Promise<Metadata> {
-  const month = params.month.toLowerCase();
+export async function generateMetadata({ params }: { params: Promise<{ month: string }> }): Promise<Metadata> {
+  const { month } = await params;
   const monthCapitalized = month.charAt(0).toUpperCase() + month.slice(1);
   const canonical = buildCanonicalUrl({ path: `/birthday/${month}` });
 
@@ -28,8 +28,12 @@ const monthNames = [
   'july', 'august', 'september', 'october', 'november', 'december'
 ];
 
-export default async function BirthdayMonthPage({ params }: { params: { month: string } }) {
-  const month = params.month.toLowerCase();
+export async function generateStaticParams() {
+  return monthNames.map((month) => ({ month }));
+}
+
+export default async function BirthdayMonthPage({ params }: { params: Promise<{ month: string }> }) {
+  const { month } = await params;
   if (!monthNames.includes(month)) {
     return (
       <ListingLayout>

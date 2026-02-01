@@ -4,6 +4,7 @@ import withBundleAnalyzer from '@next/bundle-analyzer';
 const nextConfig = {
   reactStrictMode: true,
   images: {
+    unoptimized: true,
     loader: 'custom',
     loaderFile: './lib/image-loader.ts',
     remotePatterns: [
@@ -11,9 +12,6 @@ const nextConfig = {
       { protocol: 'https', hostname: 'images.famouspeople.id' },
       { protocol: 'https', hostname: 'upload.wikimedia.org' },
     ],
-  },
-  experimental: {
-    serverActions: { allowedOrigins: ['famouspeople.id', 'www.famouspeople.id'] },
   },
 };
 

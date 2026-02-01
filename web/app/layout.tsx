@@ -40,8 +40,6 @@ export const metadata: Metadata = {
   },
 };
 
-export const runtime = 'edge';
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const structuredData = JSON.stringify([
     buildOrganizationSchema(siteUrl),

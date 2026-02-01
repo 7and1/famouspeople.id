@@ -1,4 +1,4 @@
-import dynamic from 'next/dynamic';
+import dynamicImport from 'next/dynamic';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Breadcrumb, FactWithCitation } from '../../../components/molecules';
@@ -16,8 +16,8 @@ import { formatCurrencyShort, formatDate, formatHeight } from '../../../lib/util
 import { getReleasedTiers } from '../../../lib/utils/release';
 import type { RelationshipEdge, RelationshipNode } from '../../../lib/api/types';
 
-const MarkdownContent = dynamic(() => import('../../../components/molecules/MarkdownContent'));
-const RelationshipGraph = dynamic(() => import('../../../components/organisms/RelationshipGraph'));
+const MarkdownContent = dynamicImport(() => import('../../../components/molecules/MarkdownContent'));
+const RelationshipGraph = dynamicImport(() => import('../../../components/organisms/RelationshipGraph'));
 
 interface DataSourceEntry {
   source?: string;
@@ -58,8 +58,17 @@ function getAllSources(person: { data_sources?: Record<string, unknown> }): Arra
   return sources;
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const person = await getPerson(params.slug).catch(() => null);
+// Generate static params for top people only
+export async function generateStaticParams() {
+  // Return at least one param to satisfy Next.js requirements
+  return [{ slug: 'elon-musk' }];
+}
+
+export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const person = await getPerson(slug).catch(() => null);
   if (!person) return {};
   const released = getReleasedTiers();
   const robots = released.includes(person.fame_tier || 'S') ? 'index, follow' : 'noindex, nofollow';
@@ -69,11 +78,12 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   };
 }
 
-export default async function PersonPage({ params }: { params: { slug: string } }) {
-  const person = await getPerson(params.slug).catch(() => null);
+export default async function PersonPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const person = await getPerson(slug).catch(() => null);
   if (!person) return notFound();
-  const relationships = await getRelationships(params.slug).catch(() => ({ nodes: [], edges: [] }));
-  const similarPeople = await getSimilarPeople(params.slug, 8).catch(() => []);
+  const relationships = await getRelationships(slug).catch(() => ({ nodes: [], edges: [] }));
+  const similarPeople = await getSimilarPeople(slug, 8).catch(() => []);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://famouspeople.id';
   const personSchema = buildPersonSchema(person, siteUrl);

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>https://famouspeople.id/sitemap-static.xml</loc>
+    <lastmod>2026-02-01</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://api.famouspeople.id/api/v1/sitemap/1</loc>
+    <lastmod>2026-02-01</lastmod>
+  </sitemap>
+</sitemapindex>

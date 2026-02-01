@@ -9,8 +9,16 @@ import { buildBreadcrumbSchema } from '../../../lib/seo/schema';
 import { ZODIAC_DESCRIPTIONS } from '../../../lib/seo/meta-descriptions';
 import type { Metadata } from 'next';
 
-export async function generateMetadata({ params, searchParams }: { params: { sign: string }; searchParams: Record<string, string | string[] | undefined> }): Promise<Metadata> {
-  const sign = params.sign.toLowerCase();
+const zodiacSigns = ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces'];
+
+export async function generateStaticParams() {
+  return zodiacSigns.map((sign) => ({ sign }));
+}
+
+export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params, searchParams }: { params: Promise<{ sign: string }>; searchParams: Record<string, string | string[] | undefined> }): Promise<Metadata> {
+  const { sign } = await params;
   const title = `Famous ${sign.charAt(0).toUpperCase() + sign.slice(1)} Celebrities`;
   const description = ZODIAC_DESCRIPTIONS[sign] || 'Explore celebrities by zodiac sign.';
   const page = Number(searchParams?.page || 1);
@@ -33,8 +41,8 @@ export async function generateMetadata({ params, searchParams }: { params: { sig
   };
 }
 
-export default async function ZodiacPage({ params, searchParams }: { params: { sign: string }; searchParams: Record<string, string | string[] | undefined> }) {
-  const sign = params.sign.toLowerCase();
+export default async function ZodiacPage({ params, searchParams }: { params: Promise<{ sign: string }>; searchParams: Record<string, string | string[] | undefined> }) {
+  const { sign } = await params;
   const page = Number(searchParams.page || 1);
   const limit = 20;
   const offset = (page - 1) * limit;

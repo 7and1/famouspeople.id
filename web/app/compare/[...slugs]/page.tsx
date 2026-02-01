@@ -9,8 +9,16 @@ const normalizeCompareUrl = (slugs: string[]) => {
   return `/compare/${sorted.join('-vs-')}`;
 };
 
-export async function generateMetadata({ params }: { params: { slugs: string[] } }): Promise<Metadata> {
-  const raw = params.slugs.join('/');
+// Generate static params for comparisons
+export async function generateStaticParams() {
+  return [{ slugs: ['elon-musk', 'jeff-bezos'] }];
+}
+
+export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: { params: Promise<{ slugs: string[] }> }): Promise<Metadata> {
+  const { slugs: slugsParam } = await params;
+  const raw = slugsParam.join('/');
   const slugs = raw.split('-vs-').map((slug) => slug.trim()).filter(Boolean);
   if (slugs.length < 2) {
     return {
@@ -35,8 +43,9 @@ export async function generateMetadata({ params }: { params: { slugs: string[] }
   };
 }
 
-export default async function ComparePage({ params }: { params: { slugs: string[] } }) {
-  const raw = params.slugs.join('/');
+export default async function ComparePage({ params }: { params: Promise<{ slugs: string[] }> }) {
+  const { slugs: slugsParam } = await params;
+  const raw = slugsParam.join('/');
   const slugs = raw.split('-vs-').map((slug) => slug.trim()).filter(Boolean);
   if (slugs.length < 2) {
     return redirect('/compare');

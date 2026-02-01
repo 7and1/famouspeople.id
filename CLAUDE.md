@@ -4,26 +4,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-FamousPeople.id is a celebrity database serving 10,000+ profiles through a distributed edge architecture. The system combines Cloudflare Pages (Next.js SSR) for the frontend with a VPS-hosted Hono API backend accessible via Cloudflare Tunnel, using Supabase PostgreSQL as the primary database.
+FamousPeople.id is a celebrity database serving 10,000+ profiles through a distributed edge architecture. The system uses Cloudflare Pages for Next.js SSR frontend deployment, with a VPS-hosted Hono API backend accessible via Cloudflare Tunnel, using Supabase PostgreSQL as the primary database.
 
 ### Architecture
 
 ```
-Cloudflare Pages (Next.js 16) → Cloudflare Tunnel → VPS API (Hono, port 8006) → Supabase PostgreSQL
-                                      ↓
-                               Cloudflare KV Cache
+Cloudflare Pages (Next.js 16 SSR) → Cloudflare Tunnel → VPS API (Hono, port 8006) → Supabase PostgreSQL
 ```
+
+**Key Points**:
+- Frontend is Next.js 16 with SSR (Server-Side Rendering) deployed to Cloudflare Pages
+- Dynamic routes use `force-dynamic` to enable on-demand rendering
+- API runs on VPS (107.174.42.198:8006) and is exposed via Cloudflare Tunnel at https://api.famouspeople.id
+- No Cloudflare Workers are used for the API (see `_archive/cloudflare-worker-unused/` for historical context)
 
 ## Directory Structure
 
 | Directory | Purpose |
 |-----------|---------|
-| `api/` | Hono backend API (TypeScript/Node.js) |
-| `web/` | Next.js 16 frontend (App Router) |
+| `api/` | Hono backend API (TypeScript/Node.js) running on VPS |
+| `web/` | Next.js 16 frontend (App Router, SSR) |
 | `scripts/` | Python data pipeline (Wikidata import, Supabase sync) |
 | `supabase/` | Database schema and migrations |
 | `docs/` | Architecture specs, roadmap, deployment guides |
 | `00-People/` | Obsidian vault with markdown person profiles |
+| `_archive/` | Archived/unused code (e.g., cloudflare-worker-unused) |
 
 ## Development Commands
 
@@ -45,10 +50,11 @@ npm start                # Run production build (dist/index.js)
 cd web
 npm install              # Install dependencies
 npm run dev              # Next.js dev server (http://localhost:3000)
-npm run build            # Production build
-npm run start            # Run production server
+npm run build            # Production build with SSR
 npm run lint             # ESLint check
 ```
+
+**Note**: The frontend uses Next.js 16 with SSR. Dynamic routes use `export const dynamic = 'force-dynamic'` for on-demand rendering.
 
 ### Data Pipeline (Python)
 
@@ -155,10 +161,21 @@ docker logs -f famouspeople-api
 
 ### Cloudflare Pages (Frontend)
 
-- Build command: `npm run build` (in `web/`)
-- Output directory: `.next`
-- Node.js version: 20
-- Environment variables set in Cloudflare dashboard
+The frontend is automatically deployed via GitHub Actions (`.github/workflows/deploy.yml`) on push to main:
+
+1. Builds Next.js with SSR: `npm run build` (outputs to `web/.next/`)
+2. Deploys to Cloudflare Pages: `wrangler pages deploy web/.next --project-name=famouspeople`
+
+**Manual deployment**:
+```bash
+cd web
+npm run build
+npx wrangler pages deploy .next --project-name=famouspeople
+```
+
+**Environment variables** are set in Cloudflare Pages dashboard:
+- `NEXT_PUBLIC_API_URL=https://api.famouspeople.id/api/v1`
+- `NEXT_PUBLIC_SITE_URL=https://famouspeople.id`
 
 ## Data Sync Workflow
 
@@ -214,6 +231,8 @@ Apply schema: `supabase/schema.sql` in Supabase SQL Editor.
 3. **Env validation** - Use Zod for environment variable validation
 4. **Health check** - API must have `/health` endpoint
 5. **Graceful cache degradation** - Cache failures should never throw
+6. **Dynamic routes** - Use `export const dynamic = 'force-dynamic'` for routes with searchParams
+7. **Async params** - In Next.js 16, params are Promise objects and must be awaited
 
 ## Network Configuration
 

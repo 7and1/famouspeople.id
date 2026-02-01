@@ -9,8 +9,16 @@ import { buildBreadcrumbSchema } from '../../../lib/seo/schema';
 import { getMbtiDescription } from '../../../lib/seo/meta-descriptions';
 import type { Metadata } from 'next';
 
-export async function generateMetadata({ params, searchParams }: { params: { type: string }; searchParams: Record<string, string | string[] | undefined> }): Promise<Metadata> {
-  const type = params.type.toUpperCase();
+const mbtiTypes = ['INTJ', 'INTP', 'ENTJ', 'ENTP', 'INFJ', 'INFP', 'ENFJ', 'ENFP', 'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ', 'ISTP', 'ISFP', 'ESTP', 'ESFP'];
+
+export async function generateStaticParams() {
+  return mbtiTypes.map((type) => ({ type: type.toLowerCase() }));
+}
+
+export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params, searchParams }: { params: Promise<{ type: string }>; searchParams: Record<string, string | string[] | undefined> }): Promise<Metadata> {
+  const { type } = await params;
   const description = getMbtiDescription(type);
   const baseMetadata = buildCategoryMetadata(`${type} Celebrities`, description);
   const page = Number(searchParams?.page || 1);
@@ -33,8 +41,8 @@ export async function generateMetadata({ params, searchParams }: { params: { typ
   };
 }
 
-export default async function MbtiPage({ params, searchParams }: { params: { type: string }; searchParams: Record<string, string | string[] | undefined> }) {
-  const type = params.type.toUpperCase();
+export default async function MbtiPage({ params, searchParams }: { params: Promise<{ type: string }>; searchParams: Record<string, string | string[] | undefined> }) {
+  const { type } = await params;
   const page = Number(searchParams.page || 1);
   const limit = 20;
   const offset = (page - 1) * limit;
